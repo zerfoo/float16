@@ -59,7 +59,7 @@ func ToFloat16(f32 float32) Float16 {
 		shift := 125 - exp32 // 126 - exp32 + 1 (add implicit leading 1)
 		mant32 |= 0x00800000 // Add implicit leading 1
 		mant16 := uint16((mant32 >> (shift + 13)) & 0x03FF)
-		
+
 		// Handle rounding
 		roundBit := (mant32 >> (shift + 12)) & 0x1
 		stickyMask := uint32((1 << (shift + 12)) - 1)
@@ -67,17 +67,17 @@ func ToFloat16(f32 float32) Float16 {
 		if (mant32 & stickyMask) != 0 {
 			stickyBit = 1
 		}
-		
+
 		if (roundBit | stickyBit) != 0 {
 			mant16++
 			// Check for carry
 			if (mant16 & 0x0400) != 0 {
 				mant16 = 0x0200 // 1.0 * 2^-10 (smallest normal)
-				exp32 = 0x71      // -14 + 127 (float32 bias)
-				return Float16((uint16(sign) << 15) | (uint16(exp32 - 0x70) << 10) | (mant16 & 0x03FF))
+				exp32 = 0x71    // -14 + 127 (float32 bias)
+				return Float16((uint16(sign) << 15) | (uint16(exp32-0x70) << 10) | (mant16 & 0x03FF))
 			}
 		}
-		
+
 		return Float16((uint16(sign) << 15) | mant16)
 	}
 
@@ -93,7 +93,7 @@ func ToFloat16(f32 float32) Float16 {
 
 	// Extract mantissa bits (10 bits) with rounding
 	mant16 := uint16((mant32 + 0x00000FFF + ((mant32 >> 13) & 1)) >> 13)
-	
+
 	// Check for overflow in mantissa (due to rounding)
 	if (mant16 & 0x0400) != 0 {
 		mant16 >>= 1
@@ -118,7 +118,7 @@ func ToFloat16WithMode(f32 float32, convMode ConversionMode, roundMode RoundingM
 	if f32 == 0.0 {
 		// Use math.Float32bits to check the sign bit directly
 		bits := math.Float32bits(f32)
-		if (bits & (1 << 31)) != 0 {  // Check sign bit
+		if (bits & (1 << 31)) != 0 { // Check sign bit
 			return NegativeZero, nil
 		}
 		return PositiveZero, nil
@@ -195,7 +195,7 @@ func ToFloat16WithMode(f32 float32, convMode ConversionMode, roundMode RoundingM
 	if exp16 <= 0 {
 		// Check if we can represent as subnormal
 		shift := 1 - exp16 // Number of bits to shift right to make it subnormal
-		
+
 		// For subnormal float32 inputs (exp32 == 0), we don't add the implicit leading 1
 		// For normal float32 inputs, we add the implicit leading 1
 		if exp32 != 0 {
@@ -256,11 +256,11 @@ func ToFloat16WithMode(f32 float32, convMode ConversionMode, roundMode RoundingM
 		// Check if we need to round
 		roundBit := uint32(0)
 		stickyBit := uint32(0)
-		
+
 		if totalShift > extraBits {
 			roundBit = (mant32 >> (totalShift - extraBits - 1)) & 0x1
 		}
-		
+
 		if totalShift > extraBits+1 {
 			stickyMask := (uint32(1) << (totalShift - extraBits - 1)) - 1
 			stickyBit = mant32 & stickyMask
@@ -275,7 +275,7 @@ func ToFloat16WithMode(f32 float32, convMode ConversionMode, roundMode RoundingM
 			// Check for carry that would require renormalization
 			if mant16 > 0x3FF {
 				mant16 = 0x200 // 1.0 * 2^-10 (smallest normal)
-				exp16 = 1        // Exponent for 2^-14
+				exp16 = 1      // Exponent for 2^-14
 				// No need to check for overflow here since we're dealing with subnormals
 			}
 		}
@@ -288,12 +288,12 @@ func ToFloat16WithMode(f32 float32, convMode ConversionMode, roundMode RoundingM
 			// This can happen due to rounding up from a value just below the normal range
 			exp16 = 1
 			mant16 >>= 1
-			
+
 			// If we're still in the normal range, we're done
 			if mant16 < 0x400 {
 				return packComponents(uint16(sign32), uint16(exp16), mant16), nil
 			}
-			
+
 			// If we still have a value >= 0x400, it means we rounded up to the next power of two
 			// This should only happen if we had a value very close to the next power of two
 			// and we rounded up due to the rounding mode
@@ -307,7 +307,7 @@ func ToFloat16WithMode(f32 float32, convMode ConversionMode, roundMode RoundingM
 	// Normal number conversion
 	// Extract top 10 bits of mantissa for float16
 	mant16 := mant32 >> (Float32MantissaLen - MantissaLen)
-	
+
 	// Apply rounding
 	if shouldRound(mant32, Float32MantissaLen-MantissaLen, roundMode) {
 		mant16++
@@ -345,7 +345,7 @@ func shouldRound(mantissa uint32, shift int, mode RoundingMode) bool {
 	// Get the bits that will be discarded
 	discardedBits := mantissa & ((1 << shift) - 1)
 	guardBit := (mantissa >> (shift - 1)) & 1
-	
+
 	switch mode {
 	case RoundNearestEven:
 		if guardBit == 0 {
@@ -359,19 +359,19 @@ func shouldRound(mantissa uint32, shift int, mode RoundingMode) bool {
 		// Exact halfway: round to even (check LSB of result)
 		resultLSB := (mantissa >> shift) & 1
 		return resultLSB == 1
-		
+
 	case RoundNearestAway:
 		return guardBit == 1
-		
+
 	case RoundTowardZero:
 		return false
-		
+
 	case RoundTowardPositive:
 		return discardedBits != 0
-		
+
 	case RoundTowardNegative:
 		return false // This function doesn't know sign, caller must handle
-		
+
 	default:
 		return guardBit == 1 // Default to nearest even guard bit behavior
 	}
@@ -422,7 +422,7 @@ func (f Float16) ToFloat32() float32 {
 		// We need to convert this to a normalized float32: sign * 1.mantissa * 2^e
 		// The smallest positive subnormal is 2^-24 (0x0001 = 2^-14 * 2^-10)
 		// The largest subnormal is just under 2^-14 (0x03FF = (1-2^-10) * 2^-14)
-		
+
 		// Handle the case where mantissa is zero (0.0 or -0.0)
 		if mant16 == 0 {
 			if sign != 0 {
@@ -430,11 +430,11 @@ func (f Float16) ToFloat32() float32 {
 			}
 			return 0.0 // +0.0
 		}
-		
+
 		// For subnormal numbers, we need to normalize the mantissa
 		// The mantissa is in the range [0x001, 0x3FF] for subnormals
 		// We need to find the position of the leading 1 bit
-		
+
 		// Count leading zeros in the 10-bit mantissa
 		leadingZeros := leadingZeros10(mant16)
 		if leadingZeros < 0 || leadingZeros > 9 {
@@ -444,10 +444,10 @@ func (f Float16) ToFloat32() float32 {
 			}
 			return 0.0 // +0.0
 		}
-		
+
 		// The number of positions to shift left to normalize (1 to 10)
 		shift := leadingZeros + 1
-		
+
 		// Shift the mantissa left to normalize it (make the leading 1 explicit)
 		// For example, for 0x0001 (2^-24):
 		//   mant16 = 0x0001 = 0b0000000001
@@ -456,7 +456,7 @@ func (f Float16) ToFloat32() float32 {
 		mant16 <<= shift
 		// Keep only the 10 LSBs (mantissa part)
 		mant16 &= 0x3FF
-		
+
 		// For subnormal numbers, the exponent is -14 (1 - ExponentBias)
 		// After normalization, we need to adjust the exponent by (shift - 1)
 		// So the final exponent is: -14 - (shift - 1) = -15 + shift
@@ -478,10 +478,10 @@ func (f Float16) ToFloat32() float32 {
 			}
 			return 0.0
 		}
-		
+
 		// Shift mantissa to float32 position
 		mant32 := uint32(mant16) << (Float32MantissaLen - MantissaLen)
-		
+
 		// Combine into IEEE 754 float32
 		bits := (uint32(sign) << 31) | (uint32(exp32) << 23) | mant32
 		return math.Float32frombits(bits)
@@ -543,7 +543,7 @@ func FromFloat32(f32 float32) Float16 {
 			}
 			return PositiveZero
 		}
-		
+
 		// For subnormals, we'll convert them to the smallest subnormal in float16
 		// or zero, depending on their magnitude
 		if f32 < math.SmallestNonzeroFloat32/1024 {
@@ -552,7 +552,7 @@ func FromFloat32(f32 float32) Float16 {
 			}
 			return 0x0001 // Smallest positive subnormal
 		}
-		
+
 		// For other subnormals, we'll scale them to the float16 subnormal range
 		scaled := f32 * float32(1<<10) // Scale up to get more precision
 		return FromFloat32(scaled)
@@ -573,7 +573,7 @@ func FromFloat32(f32 float32) Float16 {
 		mant16 := uint16((mant32 >> (23 - 10)) & 0x3FF)
 		roundBit := (mant32 >> (23 - 10 - 1)) & 0x1
 		mant16 += uint16(roundBit)
-		
+
 		// Check for mantissa overflow (due to rounding)
 		if (mant16 & 0x400) != 0 {
 			mant16 >>= 1
@@ -583,14 +583,14 @@ func FromFloat32(f32 float32) Float16 {
 				return Float16((sign << 15) | 0x7C00)
 			}
 		}
-		
+
 		// Combine sign, exponent, and mantissa
 		return Float16((sign << 15) | (uint16(exp16) << 10) | (mant16 & 0x3FF))
 	}
 
 	// Handle underflow - convert to subnormal or flush to zero
-	shift := 1 - exp16 // Number of bits to shift right
-	if shift > 10 + 1 + 127 { // 10 mantissa bits + 1 for the implicit leading 1 + 127 for float32 exponent range
+	shift := 1 - exp16    // Number of bits to shift right
+	if shift > 10+1+127 { // 10 mantissa bits + 1 for the implicit leading 1 + 127 for float32 exponent range
 		// Too small to represent, flush to zero
 		if sign != 0 {
 			return NegativeZero
@@ -600,13 +600,13 @@ func FromFloat32(f32 float32) Float16 {
 
 	// Convert to subnormal
 	// Add the implicit leading 1 and shift to get the mantissa
-	mant16 := uint16((0x800000 | mant32) >> (shift + 23 - 10 - 1)) >> 1
-	
+	mant16 := uint16((0x800000|mant32)>>(shift+23-10-1)) >> 1
+
 	// For very small numbers, ensure we don't lose all precision
 	if mant16 == 0 {
 		mant16 = 1 // Smallest subnormal
 	}
-	
+
 	return Float16((sign << 15) | (mant16 & 0x3FF))
 }
 
@@ -651,7 +651,7 @@ func FromFloat64(f64 float64) Float16 {
 			}
 			return PositiveZero
 		}
-		
+
 		// Convert through float32 for better handling of subnormals
 		return FromFloat32(float32(f64))
 	}
@@ -672,7 +672,7 @@ func FromFloat64(f64 float64) Float16 {
 		mant16 := uint16((mant64 >> (52 - 10)) & 0x3FF)
 		roundBit := (mant64 >> (52 - 10 - 1)) & 0x1
 		mant16 += uint16(roundBit)
-		
+
 		// Check for mantissa overflow (due to rounding)
 		if (mant16 & 0x400) != 0 {
 			mant16 >>= 1
@@ -682,14 +682,14 @@ func FromFloat64(f64 float64) Float16 {
 				return Float16((sign << 15) | 0x7C00)
 			}
 		}
-		
+
 		// Combine sign, exponent, and mantissa
 		return Float16((sign << 15) | (uint16(exp16) << 10) | (mant16 & 0x3FF))
 	}
 
 	// Handle underflow - convert to subnormal or flush to zero
-	shift := 1 - exp16 // Number of bits to shift right
-	if shift > 10 + 1 + 1022 { // 10 mantissa bits + 1 for the implicit leading 1 + 1022 for float64 exponent range
+	shift := 1 - exp16     // Number of bits to shift right
+	if shift > 10+1+1022 { // 10 mantissa bits + 1 for the implicit leading 1 + 1022 for float64 exponent range
 		// Too small to represent, flush to zero
 		if sign != 0 {
 			return NegativeZero
@@ -699,13 +699,13 @@ func FromFloat64(f64 float64) Float16 {
 
 	// Convert to subnormal
 	// Add the implicit leading 1 and shift to get the mantissa
-	mant16 := uint16((0x8000000000000 | mant64) >> (shift + 52 - 10 - 1)) >> 1
-	
+	mant16 := uint16((0x8000000000000|mant64)>>(shift+52-10-1)) >> 1
+
 	// For very small numbers, ensure we don't lose all precision
 	if mant16 == 0 {
 		mant16 = 1 // Smallest subnormal
 	}
-	
+
 	return Float16((sign << 15) | (mant16 & 0x3FF))
 }
 
@@ -843,14 +843,14 @@ func FromFloat64WithMode(f64 float64, convMode ConversionMode, roundMode Roundin
 				}
 			}
 		}
-		
+
 		// Combine sign, exponent, and mantissa
 		return Float16((sign << 15) | (uint16(exp16) << 10) | (mant16 & 0x3FF)), nil
 	}
 
 	// Handle underflow - convert to subnormal or flush to zero
 	shift := 1 - exp16 // Number of bits to shift right
-	if shift > 10 + 1 { // 10 mantissa bits + 1 for the implicit leading 1
+	if shift > 10+1 {  // 10 mantissa bits + 1 for the implicit leading 1
 		// Too small to represent, flush to zero
 		if sign != 0 {
 			return NegativeZero, nil
@@ -895,12 +895,12 @@ func FromFloat64WithMode(f64 float64, convMode ConversionMode, roundMode Roundin
 	if roundUp {
 		mant16++
 	}
-	
+
 	// Check if rounding caused overflow to normal number
 	if (mant16 & 0x400) != 0 {
 		return Float16((sign << 15) | 0x0400), nil // Smallest normal number
 	}
-	
+
 	return Float16((sign << 15) | (mant16 & 0x3FF)), nil
 }
 
@@ -913,18 +913,18 @@ func ToSlice16(f32s []float32) []Float16 {
 	}
 
 	result := make([]Float16, len(f32s))
-	
+
 	// Use unsafe pointer arithmetic for better performance
 	// This avoids bounds checking in the inner loop
 	src := (*float32)(unsafe.Pointer(&f32s[0]))
 	dst := (*Float16)(unsafe.Pointer(&result[0]))
-	
+
 	for i := 0; i < len(f32s); i++ {
 		srcPtr := (*float32)(unsafe.Pointer(uintptr(unsafe.Pointer(src)) + uintptr(i)*unsafe.Sizeof(float32(0))))
 		dstPtr := (*Float16)(unsafe.Pointer(uintptr(unsafe.Pointer(dst)) + uintptr(i)*unsafe.Sizeof(Float16(0))))
 		*dstPtr = ToFloat16(*srcPtr)
 	}
-	
+
 	return result
 }
 
@@ -935,17 +935,17 @@ func ToSlice32(f16s []Float16) []float32 {
 	}
 
 	result := make([]float32, len(f16s))
-	
+
 	// Use unsafe pointer arithmetic for better performance
 	src := (*Float16)(unsafe.Pointer(&f16s[0]))
 	dst := (*float32)(unsafe.Pointer(&result[0]))
-	
+
 	for i := 0; i < len(f16s); i++ {
 		srcPtr := (*Float16)(unsafe.Pointer(uintptr(unsafe.Pointer(src)) + uintptr(i)*unsafe.Sizeof(Float16(0))))
 		dstPtr := (*float32)(unsafe.Pointer(uintptr(unsafe.Pointer(dst)) + uintptr(i)*unsafe.Sizeof(float32(0))))
 		*dstPtr = (*srcPtr).ToFloat32()
 	}
-	
+
 	return result
 }
 
@@ -956,11 +956,11 @@ func ToSlice64(f16s []Float16) []float64 {
 	}
 
 	result := make([]float64, len(f16s))
-	
+
 	for i, f16 := range f16s {
 		result[i] = f16.ToFloat64()
 	}
-	
+
 	return result
 }
 
@@ -971,11 +971,11 @@ func FromSlice64(f64s []float64) []Float16 {
 	}
 
 	result := make([]Float16, len(f64s))
-	
+
 	for i, f64 := range f64s {
 		result[i] = FromFloat64(f64)
 	}
-	
+
 	return result
 }
 
@@ -988,7 +988,7 @@ func ToSlice16WithMode(f32s []float32, convMode ConversionMode, roundMode Roundi
 
 	result := make([]Float16, len(f32s))
 	var errors []error
-	
+
 	for i, f32 := range f32s {
 		f16, err := ToFloat16WithMode(f32, convMode, roundMode)
 		result[i] = f16
@@ -1006,7 +1006,7 @@ func ToSlice16WithMode(f32s []float32, convMode ConversionMode, roundMode Roundi
 			errors = append(errors, indexedErr)
 		}
 	}
-	
+
 	return result, errors
 }
 
