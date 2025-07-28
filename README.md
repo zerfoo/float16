@@ -1,7 +1,6 @@
 # float16
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/zerfoo/float16.svg)](https://pkg.go.dev/github.com/zerfoo/float16)
-[![Go Report Card](https://goreportcard.com/badge/github.com/zerfoo/float16)](https://goreportcard.com/report/github.com/zerfoo/float16)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 A comprehensive Go implementation of IEEE 754-2008 16-bit floating-point (half-precision) arithmetic with full support for special values, multiple rounding modes, and high-performance operations.
