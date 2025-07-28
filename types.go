@@ -11,17 +11,17 @@ type Float16 uint16
 // IEEE 754 half-precision format constants
 const (
 	SignMask     = 0x8000 // 0b1000000000000000 - Sign bit mask
-	ExponentMask = 0x7C00 // 0b0111110000000000 - Exponent bits mask  
+	ExponentMask = 0x7C00 // 0b0111110000000000 - Exponent bits mask
 	MantissaMask = 0x03FF // 0b0000001111111111 - Mantissa bits mask
 	MantissaLen  = 10     // Number of mantissa bits
 	ExponentLen  = 5      // Number of exponent bits
 
 	// Exponent bias and limits for IEEE 754 half-precision
 	// bias = 2^(exponent_bits-1) - 1 = 2^4 - 1 = 15
-	ExponentBias = 15  // Bias for 5-bit exponent
-	ExponentMax  = 31  // Maximum exponent value (11111 binary)
-	ExponentMin  = 0   // Minimum exponent value
-	
+	ExponentBias = 15 // Bias for 5-bit exponent
+	ExponentMax  = 31 // Maximum exponent value (11111 binary)
+	ExponentMin  = 0  // Minimum exponent value
+
 	// Normalized exponent range
 	ExponentNormalMin = 1  // Minimum normalized exponent
 	ExponentNormalMax = 30 // Maximum normalized exponent (infinity at 31)
@@ -42,24 +42,24 @@ const (
 	NegativeZero     Float16 = 0x8000 // -0.0
 	PositiveInfinity Float16 = 0x7C00 // +∞
 	NegativeInfinity Float16 = 0xFC00 // -∞
-	
+
 	// Largest finite values
 	MaxValue Float16 = 0x7BFF // Largest positive finite value (~65504)
 	MinValue Float16 = 0xFBFF // Largest negative finite value (~-65504)
-	
+
 	// Smallest normalized positive value
 	SmallestNormal Float16 = 0x0400 // 2^-14 ≈ 6.103515625e-05
-	
-	// Largest subnormal value  
+
+	// Largest subnormal value
 	LargestSubnormal Float16 = 0x03FF // (1023/1024) * 2^-14 ≈ 6.097555161e-05
-	
+
 	// Smallest positive subnormal value
 	SmallestSubnormal Float16 = 0x0001 // 2^-24 ≈ 5.960464478e-08
-	
+
 	// Common NaN representations
-	QuietNaN      Float16 = 0x7E00 // Quiet NaN (most significant mantissa bit set)
-	SignalingNaN  Float16 = 0x7D00 // Signaling NaN
-	NegativeQNaN  Float16 = 0xFE00 // Negative quiet NaN
+	QuietNaN     Float16 = 0x7E00 // Quiet NaN (most significant mantissa bit set)
+	SignalingNaN Float16 = 0x7D00 // Signaling NaN
+	NegativeQNaN Float16 = 0xFE00 // Negative quiet NaN
 )
 
 // ConversionMode defines how conversions handle edge cases
@@ -94,10 +94,10 @@ const (
 
 // Float16Error represents errors that can occur during Float16 operations
 type Float16Error struct {
-	Op       string      // Operation that caused the error
-	Value    interface{} // Input value that caused the error
-	Msg      string      // Error message
-	Code     ErrorCode   // Specific error code
+	Op    string      // Operation that caused the error
+	Value interface{} // Input value that caused the error
+	Msg   string      // Error message
+	Code  ErrorCode   // Specific error code
 }
 
 // ErrorCode represents specific error types
@@ -136,7 +136,7 @@ func (f Float16) IsZero() bool {
 
 // IsInf returns true if the Float16 value represents infinity
 // If sign > 0, returns true only for positive infinity
-// If sign < 0, returns true only for negative infinity  
+// If sign < 0, returns true only for negative infinity
 // If sign == 0, returns true for either infinity
 func (f Float16) IsInf(sign int) bool {
 	if (f & 0x7FFF) != PositiveInfinity {
@@ -262,30 +262,30 @@ func (f Float16) Class() FloatClass {
 		}
 		return ClassQuietNaN
 	}
-	
+
 	sign := f.Signbit()
-	
+
 	if f.IsInf(0) {
 		if sign {
 			return ClassNegativeInfinity
 		}
 		return ClassPositiveInfinity
 	}
-	
+
 	if f.IsZero() {
 		if sign {
 			return ClassNegativeZero
 		}
 		return ClassPositiveZero
 	}
-	
+
 	if f.IsSubnormal() {
 		if sign {
 			return ClassNegativeSubnormal
 		}
 		return ClassPositiveSubnormal
 	}
-	
+
 	// Normal number
 	if sign {
 		return ClassNegativeNormal

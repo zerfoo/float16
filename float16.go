@@ -58,44 +58,43 @@ type Config struct {
 	DefaultRoundingMode   RoundingMode
 	DefaultArithmeticMode ArithmeticMode
 	EnableFastMath        bool // Package float16 implements the 16-bit floating point data type (IEEE 754-2008).
-//
-// This implementation provides conversion between float16 and other floating-point types
-// (float32 and float64) with support for various rounding modes and error handling.
-//
-// # Special Values
-//
-// The float16 type supports all IEEE 754-2008 special values:
-//   - Positive and negative zero
-//   - Positive and negative infinity
-//   - Not-a-Number (NaN) values with payload
-//   - Normalized numbers
-//   - Subnormal (denormal) numbers
-//
-// # Subnormal Numbers
-//
-// When converting to higher-precision types (float32/float64), subnormal float16 values
-// are preserved. However, when converting back from higher-precision types to float16,
-// subnormal values may be rounded to the nearest representable normal float16 value.
-// This behavior is consistent with many hardware implementations that handle subnormals
-// in a similar way for performance reasons.
-//
-// # Rounding Modes
-//
-// The following rounding modes are supported for conversions:
-//   - RoundNearestEven: Round to nearest, ties to even (default)
-//   - RoundTowardZero: Round toward zero (truncate)
-//   - RoundTowardPositive: Round toward positive infinity
-//   - RoundTowardNegative: Round toward negative infinity
-//   - RoundNearestAway: Round to nearest, ties away from zero
-//
-// # Error Handling
-//
-// Conversion functions with a ConversionMode parameter can return errors for:
-//   - Overflow: When a value is too large to be represented
-//   - Underflow: When a value is too small to be represented (in strict mode)
-//   - Inexact: When rounding occurs (in strict mode)
-//
-// See: http://en.wikipedia.org/wiki/Half-precision_floating-point_format
+	// This implementation provides conversion between float16 and other floating-point types
+	// (float32 and float64) with support for various rounding modes and error handling.
+	//
+	// # Special Values
+	//
+	// The float16 type supports all IEEE 754-2008 special values:
+	//   - Positive and negative zero
+	//   - Positive and negative infinity
+	//   - Not-a-Number (NaN) values with payload
+	//   - Normalized numbers
+	//   - Subnormal (denormal) numbers
+	//
+	// # Subnormal Numbers
+	//
+	// When converting to higher-precision types (float32/float64), subnormal float16 values
+	// are preserved. However, when converting back from higher-precision types to float16,
+	// subnormal values may be rounded to the nearest representable normal float16 value.
+	// This behavior is consistent with many hardware implementations that handle subnormals
+	// in a similar way for performance reasons.
+	//
+	// # Rounding Modes
+	//
+	// The following rounding modes are supported for conversions:
+	//   - RoundNearestEven: Round to nearest, ties to even (default)
+	//   - RoundTowardZero: Round toward zero (truncate)
+	//   - RoundTowardPositive: Round toward positive infinity
+	//   - RoundTowardNegative: Round toward negative infinity
+	//   - RoundNearestAway: Round to nearest, ties away from zero
+	//
+	// # Error Handling
+	//
+	// Conversion functions with a ConversionMode parameter can return errors for:
+	//   - Overflow: When a value is too large to be represented
+	//   - Underflow: When a value is too small to be represented (in strict mode)
+	//   - Inexact: When rounding occurs (in strict mode)
+	//
+	// See: http://en.wikipedia.org/wiki/Half-precision_floating-point_format
 }
 
 // DefaultConfig returns the default package configuration
@@ -117,7 +116,7 @@ var (
 func Configure(cfg *Config) {
 	configMutex.Lock()
 	defer configMutex.Unlock()
-	
+
 	config = cfg
 	DefaultConversionMode = cfg.DefaultConversionMode
 	DefaultRoundingMode = cfg.DefaultRoundingMode
@@ -128,7 +127,7 @@ func Configure(cfg *Config) {
 func GetConfig() *Config {
 	configMutex.RLock()
 	defer configMutex.RUnlock()
-	
+
 	// Return a copy to prevent external modification
 	return &Config{
 		DefaultConversionMode: config.DefaultConversionMode,
@@ -195,25 +194,25 @@ func NextAfter(f, g Float16) Float16 {
 	if f.IsNaN() || g.IsNaN() {
 		return QuietNaN
 	}
-	
+
 	if Equal(f, g) {
 		return g
 	}
-	
+
 	if f.IsZero() {
 		if g.Signbit() {
 			return FromBits(0x8001) // Smallest negative subnormal
 		}
 		return FromBits(0x0001) // Smallest positive subnormal
 	}
-	
+
 	bits := f.Bits()
 	if (f.ToFloat32() < g.ToFloat32()) == !f.Signbit() {
 		bits++
 	} else {
 		bits--
 	}
-	
+
 	return FromBits(bits)
 }
 
@@ -224,7 +223,7 @@ func Frexp(f Float16) (frac Float16, exp int) {
 	if f.IsZero() || f.IsNaN() || f.IsInf(0) {
 		return f, 0
 	}
-	
+
 	f32 := f.ToFloat32()
 	frac32, exp := math.Frexp(float64(f32))
 	return ToFloat16(float32(frac32)), exp
@@ -235,7 +234,7 @@ func Ldexp(frac Float16, exp int) Float16 {
 	if frac.IsZero() || frac.IsNaN() || frac.IsInf(0) {
 		return frac
 	}
-	
+
 	frac32 := frac.ToFloat32()
 	result := math.Ldexp(float64(frac32), exp)
 	return ToFloat16(float32(result))
@@ -247,7 +246,7 @@ func Modf(f Float16) (integer, frac Float16) {
 	if f.IsNaN() || f.IsInf(0) {
 		return f, f
 	}
-	
+
 	f32 := f.ToFloat32()
 	int32, frac32 := math.Modf(float64(f32))
 	return ToFloat16(float32(int32)), ToFloat16(float32(frac32))
@@ -288,8 +287,8 @@ func GetMemoryUsage() int {
 func DebugInfo() map[string]interface{} {
 	cfg := GetConfig()
 	return map[string]interface{}{
-		"version":                Version,
-		"memory_usage_bytes":     GetMemoryUsage(),
+		"version":                 Version,
+		"memory_usage_bytes":      GetMemoryUsage(),
 		"default_conversion_mode": cfg.DefaultConversionMode,
 		"default_rounding_mode":   cfg.DefaultRoundingMode,
 		"default_arithmetic_mode": cfg.DefaultArithmeticMode,
@@ -325,17 +324,17 @@ var (
 	Four16  = ToFloat16(4.0)
 	Five16  = ToFloat16(5.0)
 	Ten16   = ToFloat16(10.0)
-	
+
 	// Common fractional values
 	Half16    = ToFloat16(0.5)
 	Quarter16 = ToFloat16(0.25)
 	Third16   = ToFloat16(1.0 / 3.0)
-	
+
 	// Special mathematical values
 	NaN16  = QuietNaN
 	PosInf = PositiveInfinity
 	NegInf = NegativeInfinity
-	
+
 	// Commonly used constants
 	Deg2Rad = ToFloat16(float32(math.Pi / 180.0)) // Degrees to radians
 	Rad2Deg = ToFloat16(float32(180.0 / math.Pi)) // Radians to degrees
@@ -369,14 +368,14 @@ func ComputeSliceStats(s []Float16) SliceStats {
 	if len(s) == 0 {
 		return SliceStats{}
 	}
-	
+
 	stats := SliceStats{
 		Min:    s[0],
 		Max:    s[0],
 		Sum:    PositiveZero,
 		Length: len(s),
 	}
-	
+
 	for _, v := range s {
 		if !v.IsNaN() {
 			if Less(v, stats.Min) {
@@ -388,11 +387,11 @@ func ComputeSliceStats(s []Float16) SliceStats {
 		}
 		stats.Sum = Add(stats.Sum, v)
 	}
-	
+
 	if stats.Length > 0 {
 		stats.Mean = Div(stats.Sum, FromInt(stats.Length))
 	}
-	
+
 	return stats
 }
 

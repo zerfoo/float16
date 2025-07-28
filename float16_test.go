@@ -9,9 +9,9 @@ import (
 const (
 	// Rounding modes
 	testRoundNearestEven = RoundNearestEven
-	testRoundToZero     = RoundTowardZero
-	testRoundUp         = RoundTowardPositive
-	testRoundDown       = RoundTowardNegative
+	testRoundToZero      = RoundTowardZero
+	testRoundUp          = RoundTowardPositive
+	testRoundDown        = RoundTowardNegative
 )
 
 const (
@@ -44,7 +44,7 @@ func TestToFloat16Basic(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := ToFloat16(test.input)
 			if result != test.expected {
-				t.Errorf("ToFloat16(%g) = 0x%04x, expected 0x%04x", 
+				t.Errorf("ToFloat16(%g) = 0x%04x, expected 0x%04x",
 					test.input, result, test.expected)
 			}
 		})
@@ -98,7 +98,7 @@ func TestToFloat32(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := test.input.ToFloat32()
 			if result != test.expected && !(math.IsInf(float64(result), 0) && math.IsInf(float64(test.expected), 0)) {
-				t.Errorf("Float16(0x%04x).ToFloat32() = %g, expected %g", 
+				t.Errorf("Float16(0x%04x).ToFloat32() = %g, expected %g",
 					test.input, result, test.expected)
 			}
 		})
@@ -114,7 +114,7 @@ func TestRoundTripConversion(t *testing.T) {
 
 	for i := 0; i < 65536; i++ {
 		f16 := Float16(i)
-		
+
 		// Skip NaN values as they may not round-trip exactly
 		if f16.IsNaN() {
 			continue
@@ -123,7 +123,7 @@ func TestRoundTripConversion(t *testing.T) {
 		f32 := f16.ToFloat32()
 		f16_back := ToFloat16(f32)
 		totalTested++
-		
+
 		// For subnormal numbers, we can't guarantee exact round-trip due to precision loss
 		// in float32 representation. Instead, we'll check that the values are very close.
 		isSubnormal := f16.IsSubnormal()
@@ -131,35 +131,19 @@ func TestRoundTripConversion(t *testing.T) {
 			totalSubnormal++
 			// For subnormals, check if the values are within 1 ULP
 			f32_again := f16_back.ToFloat32()
-			if math.Abs(float64(f32_again - f32)) > 1e-8 {
+			if math.Abs(float64(f32_again-f32)) > 1e-8 {
 				failureCount++
 				subnormalFailures++
-				if failureCount <= 5 {
-					t.Logf("Subnormal round trip failed for 0x%04x: original=%.8g, roundtrip=%.8g, diff=%.8g",
-						uint16(f16), f32, f32_again, f32_again-f32)
-				}
 			}
 		} else if f16 != f16_back {
 			// For normal numbers, we should have exact round-trip
 			failureCount++
-			if failureCount <= 5 {
-				t.Errorf("Round trip failed for 0x%04x (uint16: %d): got 0x%04x (uint16: %d), float32 intermediate: %g", 
-					uint16(f16), uint16(f16), uint16(f16_back), uint16(f16_back), f32)
-			}
 		}
 	}
 
 	if failureCount > 0 {
-		t.Logf("Total round-trip failures: %d out of %d values tested", failureCount, totalTested)
-		t.Logf("  - Subnormal failures: %d out of %d subnormal values", subnormalFailures, totalSubnormal)
-		
-		// Only fail the test for non-subnormal failures
-		if failureCount > subnormalFailures {
-			t.Errorf("Found %d non-subnormal round-trip failures (out of %d values tested)", 
-				failureCount-subnormalFailures, totalTested-totalSubnormal)
-		} else {
-			t.Log("All non-subnormal values round-tripped correctly")
-		}
+		t.Errorf("Found %d round-trip failures out of %d values tested (%.2f%%), including %d subnormal failures",
+			failureCount, totalTested, 100*float64(failureCount)/float64(totalTested), subnormalFailures)
 	}
 }
 
@@ -239,7 +223,7 @@ func TestAbsNeg(t *testing.T) {
 	if a.Neg() != ToFloat16(1.0) {
 		t.Error("Neg(-1.0) should be 1.0")
 	}
-	
+
 	b := ToFloat16(1.0)
 	if b.Neg() != ToFloat16(-1.0) {
 		t.Error("Neg(1.0) should be -1.0")
@@ -265,7 +249,7 @@ func TestAddBasic(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Add(test.a, test.b)
 			if !Equal(result, test.expected) && !result.IsNaN() {
-				t.Errorf("Add(0x%04x, 0x%04x) = 0x%04x, expected 0x%04x", 
+				t.Errorf("Add(0x%04x, 0x%04x) = 0x%04x, expected 0x%04x",
 					test.a, test.b, result, test.expected)
 			}
 		})
@@ -288,7 +272,7 @@ func TestSubBasic(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Sub(test.a, test.b)
 			if !Equal(result, test.expected) {
-				t.Errorf("Sub(0x%04x, 0x%04x) = 0x%04x, expected 0x%04x", 
+				t.Errorf("Sub(0x%04x, 0x%04x) = 0x%04x, expected 0x%04x",
 					test.a, test.b, result, test.expected)
 			}
 		})
@@ -312,7 +296,7 @@ func TestMulBasic(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Mul(test.a, test.b)
 			if !Equal(result, test.expected) {
-				t.Errorf("Mul(0x%04x, 0x%04x) = 0x%04x, expected 0x%04x", 
+				t.Errorf("Mul(0x%04x, 0x%04x) = 0x%04x, expected 0x%04x",
 					test.a, test.b, result, test.expected)
 			}
 		})
@@ -336,7 +320,7 @@ func TestDivBasic(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Div(test.a, test.b)
 			if !Equal(result, test.expected) && !result.IsInf(0) {
-				t.Errorf("Div(0x%04x, 0x%04x) = 0x%04x, expected 0x%04x", 
+				t.Errorf("Div(0x%04x, 0x%04x) = 0x%04x, expected 0x%04x",
 					test.a, test.b, result, test.expected)
 			}
 		})
@@ -390,12 +374,12 @@ func TestMinMax(t *testing.T) {
 func TestToSlice16(t *testing.T) {
 	input := []float32{0.0, 1.0, 2.0, -1.0}
 	expected := []Float16{PositiveZero, ToFloat16(1.0), ToFloat16(2.0), ToFloat16(-1.0)}
-	
+
 	result := ToSlice16(input)
 	if len(result) != len(expected) {
 		t.Fatalf("Length mismatch: got %d, expected %d", len(result), len(expected))
 	}
-	
+
 	for i := range result {
 		if result[i] != expected[i] {
 			t.Errorf("ToSlice16[%d] = 0x%04x, expected 0x%04x", i, result[i], expected[i])
@@ -406,12 +390,12 @@ func TestToSlice16(t *testing.T) {
 func TestToSlice32(t *testing.T) {
 	input := []Float16{PositiveZero, ToFloat16(1.0), ToFloat16(2.0), ToFloat16(-1.0)}
 	expected := []float32{0.0, 1.0, 2.0, -1.0}
-	
+
 	result := ToSlice32(input)
 	if len(result) != len(expected) {
 		t.Fatalf("Length mismatch: got %d, expected %d", len(result), len(expected))
 	}
-	
+
 	for i := range result {
 		if result[i] != expected[i] {
 			t.Errorf("ToSlice32[%d] = %g, expected %g", i, result[i], expected[i])
@@ -422,7 +406,7 @@ func TestToSlice32(t *testing.T) {
 func TestSliceOperations(t *testing.T) {
 	a := []Float16{ToFloat16(1.0), ToFloat16(2.0), ToFloat16(3.0)}
 	b := []Float16{ToFloat16(1.0), ToFloat16(1.0), ToFloat16(1.0)}
-	
+
 	// Test AddSlice
 	result := AddSlice(a, b)
 	expected := []Float16{ToFloat16(2.0), ToFloat16(3.0), ToFloat16(4.0)}
@@ -431,7 +415,7 @@ func TestSliceOperations(t *testing.T) {
 			t.Errorf("AddSlice[%d] = 0x%04x, expected 0x%04x", i, result[i], expected[i])
 		}
 	}
-	
+
 	// Test ScaleSlice
 	scaled := ScaleSlice(a, ToFloat16(2.0))
 	expectedScaled := []Float16{ToFloat16(2.0), ToFloat16(4.0), ToFloat16(6.0)}
@@ -440,14 +424,14 @@ func TestSliceOperations(t *testing.T) {
 			t.Errorf("ScaleSlice[%d] = 0x%04x, expected 0x%04x", i, scaled[i], expectedScaled[i])
 		}
 	}
-	
+
 	// Test SumSlice
 	sum := SumSlice(a)
 	expectedSum := ToFloat16(6.0)
 	if !Equal(sum, expectedSum) {
 		t.Errorf("SumSlice = 0x%04x, expected 0x%04x", sum, expectedSum)
 	}
-	
+
 	// Test DotProduct
 	dot := DotProduct(a, b)
 	expectedDot := ToFloat16(6.0) // 1*1 + 2*1 + 3*1 = 6
@@ -470,12 +454,8 @@ func TestDebugSubnormalValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f16 := Float16(tt.value)
-			f32 := f16.ToFloat32()
-			f64 := f16.ToFloat64()
-			exp32 := math.Float32bits(f32)
-			exp64 := math.Float64bits(f64)
-			t.Logf("%s (0x%04x):\n  float32: %v (0x%08x)\n  float64: %v (0x%016x)",
-				tt.name, tt.value, f32, exp32, f64, exp64)
+			f16.ToFloat32()
+			f16.ToFloat64()
 		})
 	}
 }
@@ -497,7 +477,7 @@ func TestSqrt(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Sqrt(test.input)
 			if !Equal(result, test.expected) && !result.IsInf(0) {
-				t.Errorf("Sqrt(0x%04x) = 0x%04x, expected 0x%04x", 
+				t.Errorf("Sqrt(0x%04x) = 0x%04x, expected 0x%04x",
 					test.input, result, test.expected)
 			}
 		})
@@ -567,7 +547,7 @@ func TestToFloat64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.input.ToFloat64()
-			
+
 			// Special handling for NaN
 			if tt.input.IsNaN() {
 				if !math.IsNaN(result) {
@@ -585,14 +565,14 @@ func TestToFloat64(t *testing.T) {
 				// This is particularly important for subnormal numbers
 				diff := math.Abs(result - tt.expected)
 				if diff > 1e-10 {
-					t.Errorf("ToFloat64() = %v, want close to %v (diff: %v)", 
+					t.Errorf("ToFloat64() = %v, want close to %v (diff: %v)",
 						result, tt.expected, diff)
 				}
 			}
 
 			// Additional check: Ensure the sign is preserved
 			if math.Signbit(float64(result)) != math.Signbit(float64(tt.expected)) {
-				t.Errorf("Sign mismatch: got %v, want %v", 
+				t.Errorf("Sign mismatch: got %v, want %v",
 					math.Signbit(result), math.Signbit(tt.expected))
 			}
 
@@ -607,7 +587,7 @@ func TestToFloat64(t *testing.T) {
 			} else if tt.input.IsSubnormal() {
 				// For subnormal numbers, we use exact values from the implementation
 				if result != tt.expected {
-					t.Errorf("Unexpected value for %s: got %v, want %v", 
+					t.Errorf("Unexpected value for %s: got %v, want %v",
 						tt.name, result, tt.expected)
 				}
 			}
@@ -631,7 +611,7 @@ func TestToFloat64(t *testing.T) {
 
 				f64 := f16.ToFloat64()
 				f32 := f16.ToFloat32()
-				
+
 				// The result should match float32 conversion
 				if float64(f32) != f64 {
 					t.Errorf("Mismatch for 0x%04x: ToFloat64()=%v, float64(ToFloat32())=%v",
@@ -673,10 +653,10 @@ func TestFromFloat64(t *testing.T) {
 			} else {
 				// For subnormal values, just verify the sign is correct and the value is small
 				if result.Sign() != test.expected.Sign() {
-					t.Errorf("FromFloat64(%g) = 0x%04x, expected sign %d but got %d", 
+					t.Errorf("FromFloat64(%g) = 0x%04x, expected sign %d but got %d",
 						test.input, result, test.expected.Sign(), result.Sign())
 				}
-				
+
 				// Log the actual value for debugging
 				t.Logf("FromFloat64(%g) = 0x%04x (value: %g)", test.input, result, result.ToFloat32())
 			}
@@ -723,10 +703,10 @@ func TestFromFloat64WithMode(t *testing.T) {
 
 	// Test different rounding modes
 	roundingTests := []struct {
-		input    float64
+		input     float64
 		roundMode RoundingMode
 		expected  Float16
-		name     string
+		name      string
 	}{
 		{1.2, testRoundNearestEven, 0x3CCD, "1.2 to nearest even"},
 		{1.2, testRoundToZero, 0x3CCC, "1.2 toward zero"},
@@ -741,7 +721,7 @@ func TestFromFloat64WithMode(t *testing.T) {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 			if result != test.expected {
-				t.Errorf("FromFloat64WithMode(%g, %v) = 0x%04x, expected 0x%04x", 
+				t.Errorf("FromFloat64WithMode(%g, %v) = 0x%04x, expected 0x%04x",
 					test.input, test.roundMode, result, test.expected)
 			}
 		})
@@ -753,7 +733,7 @@ func TestFromFloat64WithMode(t *testing.T) {
 func TestArithmeticWithNaN(t *testing.T) {
 	nan := QuietNaN
 	one := ToFloat16(1.0)
-	
+
 	if !Add(nan, one).IsNaN() {
 		t.Error("NaN + 1 should be NaN")
 	}
@@ -768,7 +748,7 @@ func TestArithmeticWithNaN(t *testing.T) {
 func TestArithmeticWithInfinity(t *testing.T) {
 	inf := PositiveInfinity
 	one := ToFloat16(1.0)
-	
+
 	if Add(inf, one) != inf {
 		t.Error("∞ + 1 should be ∞")
 	}
@@ -824,7 +804,7 @@ func BenchmarkToSlice16(b *testing.B) {
 	for i := range input {
 		input[i] = float32(i) * 0.1
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = ToSlice16(input)
@@ -836,7 +816,7 @@ func BenchmarkToSlice32(b *testing.B) {
 	for i := range input {
 		input[i] = ToFloat16(float32(i) * 0.1)
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = ToSlice32(input)
@@ -851,7 +831,7 @@ func BenchmarkDotProduct(b *testing.B) {
 		a[i] = ToFloat16(float32(i) * 0.1)
 		c[i] = ToFloat16(float32(i) * 0.2)
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = DotProduct(a, c)
@@ -863,7 +843,7 @@ func BenchmarkDotProduct(b *testing.B) {
 func TestConfiguration(t *testing.T) {
 	// Save original config
 	originalConfig := GetConfig()
-	
+
 	// Test custom configuration
 	customConfig := &Config{
 		DefaultConversionMode: ModeStrict,
@@ -871,21 +851,21 @@ func TestConfiguration(t *testing.T) {
 		DefaultArithmeticMode: ModeFastArithmetic,
 		EnableFastMath:        true,
 	}
-	
+
 	Configure(customConfig)
-	
+
 	newConfig := GetConfig()
 	if newConfig.DefaultConversionMode != ModeStrict {
 		t.Error("Configuration not applied correctly")
 	}
-	
+
 	// Restore original config
 	Configure(originalConfig)
 }
 
 func TestDebugInfo(t *testing.T) {
 	info := DebugInfo()
-	
+
 	if info["version"] != Version {
 		t.Error("Debug info should contain correct version")
 	}

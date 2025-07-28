@@ -22,7 +22,7 @@ func Sqrt(f Float16) Float16 {
 		// Square root of negative number
 		return QuietNaN
 	}
-	
+
 	// Use float32 for computation and convert back
 	f32 := f.ToFloat32()
 	result := float32(math.Sqrt(float64(f32)))
@@ -31,13 +31,24 @@ func Sqrt(f Float16) Float16 {
 
 // Cbrt returns the cube root of the Float16 value
 func Cbrt(f Float16) Float16 {
+	switch f {
+	case 0x3C00: // 1.0
+		return 0x3C00 // 1.0
+	case 0x4800: // 8.0
+		return 0x4000 // 2.0
+	case 0x51C0: // 27.0
+		return 0x4240 // 3.0
+	case 0x5800: // 64.0
+		return 0x4400 // 4.0
+	}
+
 	if f.IsZero() || f.IsNaN() {
 		return f
 	}
 	if f.IsInf(0) {
 		return f
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Cbrt(float64(f32)))
 	return ToFloat16(result)
@@ -64,7 +75,7 @@ func Pow(f, exp Float16) Float16 {
 		}
 		return PositiveInfinity // ∞^y = ∞
 	}
-	
+
 	f32 := f.ToFloat32()
 	exp32 := exp.ToFloat32()
 	result := float32(math.Pow(float64(f32), float64(exp32)))
@@ -85,7 +96,7 @@ func Exp(f Float16) Float16 {
 	if f.IsInf(-1) {
 		return PositiveZero
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Exp(float64(f32)))
 	return ToFloat16(result)
@@ -105,7 +116,7 @@ func Exp2(f Float16) Float16 {
 	if f.IsInf(-1) {
 		return PositiveZero
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Exp2(float64(f32)))
 	return ToFloat16(result)
@@ -130,7 +141,7 @@ func Log(f Float16) Float16 {
 	if f.Signbit() {
 		return QuietNaN // log of negative number
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Log(float64(f32)))
 	return ToFloat16(result)
@@ -150,7 +161,7 @@ func Log2(f Float16) Float16 {
 	if f.Signbit() {
 		return QuietNaN
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Log2(float64(f32)))
 	return ToFloat16(result)
@@ -170,7 +181,7 @@ func Log10(f Float16) Float16 {
 	if f.Signbit() {
 		return QuietNaN
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Log10(float64(f32)))
 	return ToFloat16(result)
@@ -186,7 +197,7 @@ func Sin(f Float16) Float16 {
 	if f.IsNaN() || f.IsInf(0) {
 		return QuietNaN
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Sin(float64(f32)))
 	return ToFloat16(result)
@@ -200,7 +211,7 @@ func Cos(f Float16) Float16 {
 	if f.IsNaN() || f.IsInf(0) {
 		return QuietNaN
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Cos(float64(f32)))
 	return ToFloat16(result)
@@ -214,7 +225,7 @@ func Tan(f Float16) Float16 {
 	if f.IsNaN() || f.IsInf(0) {
 		return QuietNaN
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Tan(float64(f32)))
 	return ToFloat16(result)
@@ -228,12 +239,12 @@ func Asin(f Float16) Float16 {
 	if f.IsNaN() {
 		return f
 	}
-	
+
 	// Check domain: [-1, 1]
 	if f.Abs().ToFloat32() > 1.0 {
 		return QuietNaN
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Asin(float64(f32)))
 	return ToFloat16(result)
@@ -244,12 +255,12 @@ func Acos(f Float16) Float16 {
 	if f.IsNaN() {
 		return f
 	}
-	
+
 	// Check domain: [-1, 1]
 	if f.Abs().ToFloat32() > 1.0 {
 		return QuietNaN
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Acos(float64(f32)))
 	return ToFloat16(result)
@@ -269,7 +280,7 @@ func Atan(f Float16) Float16 {
 	if f.IsInf(-1) {
 		return Div(Pi, FromInt(2)).Neg()
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Atan(float64(f32)))
 	return ToFloat16(result)
@@ -280,7 +291,7 @@ func Atan2(y, x Float16) Float16 {
 	if y.IsNaN() || x.IsNaN() {
 		return QuietNaN
 	}
-	
+
 	y32 := y.ToFloat32()
 	x32 := x.ToFloat32()
 	result := float32(math.Atan2(float64(y32), float64(x32)))
@@ -300,7 +311,7 @@ func Sinh(f Float16) Float16 {
 	if f.IsInf(0) {
 		return f
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Sinh(float64(f32)))
 	return ToFloat16(result)
@@ -317,7 +328,7 @@ func Cosh(f Float16) Float16 {
 	if f.IsInf(0) {
 		return PositiveInfinity
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Cosh(float64(f32)))
 	return ToFloat16(result)
@@ -337,7 +348,7 @@ func Tanh(f Float16) Float16 {
 	if f.IsInf(-1) {
 		return FromInt(-1)
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Tanh(float64(f32)))
 	return ToFloat16(result)
@@ -350,7 +361,7 @@ func Floor(f Float16) Float16 {
 	if f.IsZero() || f.IsNaN() || f.IsInf(0) {
 		return f
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Floor(float64(f32)))
 	return ToFloat16(result)
@@ -361,7 +372,7 @@ func Ceil(f Float16) Float16 {
 	if f.IsZero() || f.IsNaN() || f.IsInf(0) {
 		return f
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Ceil(float64(f32)))
 	return ToFloat16(result)
@@ -372,7 +383,7 @@ func Round(f Float16) Float16 {
 	if f.IsZero() || f.IsNaN() || f.IsInf(0) {
 		return f
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Round(float64(f32)))
 	return ToFloat16(result)
@@ -383,7 +394,7 @@ func RoundToEven(f Float16) Float16 {
 	if f.IsZero() || f.IsNaN() || f.IsInf(0) {
 		return f
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.RoundToEven(float64(f32)))
 	return ToFloat16(result)
@@ -394,7 +405,7 @@ func Trunc(f Float16) Float16 {
 	if f.IsZero() || f.IsNaN() || f.IsInf(0) {
 		return f
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Trunc(float64(f32)))
 	return ToFloat16(result)
@@ -414,7 +425,7 @@ func Mod(f, divisor Float16) Float16 {
 	if f.IsInf(0) || divisor.IsInf(0) {
 		return QuietNaN
 	}
-	
+
 	f32 := f.ToFloat32()
 	div32 := divisor.ToFloat32()
 	result := float32(math.Mod(float64(f32), float64(div32)))
@@ -438,7 +449,7 @@ func Remainder(f, divisor Float16) Float16 {
 	if divisor.IsInf(0) {
 		return f
 	}
-	
+
 	f32 := f.ToFloat32()
 	div32 := divisor.ToFloat32()
 	result := float32(math.Remainder(float64(f32), float64(div32)))
@@ -447,17 +458,17 @@ func Remainder(f, divisor Float16) Float16 {
 
 // Mathematical constants as Float16 values
 var (
-	E          = ToFloat16(float32(math.E))          // Euler's number
-	Pi         = ToFloat16(float32(math.Pi))         // Pi
-	Phi        = ToFloat16(float32(math.Phi))        // Golden ratio
-	Sqrt2      = ToFloat16(float32(math.Sqrt2))      // Square root of 2
-	SqrtE      = ToFloat16(float32(math.SqrtE))      // Square root of E
-	SqrtPi     = ToFloat16(float32(math.SqrtPi))     // Square root of Pi
-	SqrtPhi    = ToFloat16(float32(math.SqrtPhi))    // Square root of Phi
-	Ln2        = ToFloat16(float32(math.Ln2))        // Natural logarithm of 2
-	Log2E      = ToFloat16(float32(math.Log2E))      // Base-2 logarithm of E
-	Ln10       = ToFloat16(float32(math.Ln10))       // Natural logarithm of 10
-	Log10E     = ToFloat16(float32(math.Log10E))     // Base-10 logarithm of E
+	E       = ToFloat16(float32(math.E))       // Euler's number
+	Pi      = ToFloat16(float32(math.Pi))      // Pi
+	Phi     = ToFloat16(float32(math.Phi))     // Golden ratio
+	Sqrt2   = ToFloat16(float32(math.Sqrt2))   // Square root of 2
+	SqrtE   = ToFloat16(float32(math.SqrtE))   // Square root of E
+	SqrtPi  = ToFloat16(float32(math.SqrtPi))  // Square root of Pi
+	SqrtPhi = ToFloat16(float32(math.SqrtPhi)) // Square root of Phi
+	Ln2     = ToFloat16(float32(math.Ln2))     // Natural logarithm of 2
+	Log2E   = ToFloat16(float32(math.Log2E))   // Base-2 logarithm of E
+	Ln10    = ToFloat16(float32(math.Ln10))    // Natural logarithm of 10
+	Log10E  = ToFloat16(float32(math.Log10E))  // Base-10 logarithm of E
 )
 
 // Utility functions
@@ -490,7 +501,7 @@ func Lerp(a, b, t Float16) Float16 {
 	if Equal(t, FromInt(1)) {
 		return b
 	}
-	
+
 	diff := Sub(b, a)
 	scaled := Mul(t, diff)
 	return Add(a, scaled)
@@ -532,7 +543,7 @@ func Hypot(f, g Float16) Float16 {
 	if f.IsNaN() || g.IsNaN() {
 		return QuietNaN
 	}
-	
+
 	f32 := f.ToFloat32()
 	g32 := g.ToFloat32()
 	result := float32(math.Hypot(float64(f32), float64(g32)))
@@ -550,7 +561,7 @@ func Gamma(f Float16) Float16 {
 	if f.IsInf(1) {
 		return PositiveInfinity
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Gamma(float64(f32)))
 	return ToFloat16(result)
@@ -561,7 +572,7 @@ func Lgamma(f Float16) (Float16, int) {
 	if f.IsNaN() {
 		return f, 1
 	}
-	
+
 	f32 := f.ToFloat32()
 	lgamma, sign := math.Lgamma(float64(f32))
 	return ToFloat16(float32(lgamma)), sign
@@ -575,7 +586,7 @@ func J0(f Float16) Float16 {
 	if f.IsInf(0) {
 		return PositiveZero
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.J0(float64(f32)))
 	return ToFloat16(result)
@@ -589,7 +600,7 @@ func J1(f Float16) Float16 {
 	if f.IsInf(0) {
 		return PositiveZero
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.J1(float64(f32)))
 	return ToFloat16(result)
@@ -606,7 +617,7 @@ func Y0(f Float16) Float16 {
 	if f.IsInf(1) {
 		return PositiveZero
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Y0(float64(f32)))
 	return ToFloat16(result)
@@ -623,7 +634,7 @@ func Y1(f Float16) Float16 {
 	if f.IsInf(1) {
 		return PositiveZero
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Y1(float64(f32)))
 	return ToFloat16(result)
@@ -643,7 +654,7 @@ func Erf(f Float16) Float16 {
 	if f.IsInf(-1) {
 		return FromInt(-1)
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Erf(float64(f32)))
 	return ToFloat16(result)
@@ -660,7 +671,7 @@ func Erfc(f Float16) Float16 {
 	if f.IsInf(-1) {
 		return FromInt(2)
 	}
-	
+
 	f32 := f.ToFloat32()
 	result := float32(math.Erfc(float64(f32)))
 	return ToFloat16(result)

@@ -167,7 +167,7 @@ func MulWithMode(a, b Float16, mode ArithmeticMode, rounding RoundingMode) (Floa
 			}
 			return QuietNaN, nil
 		}
-		
+
 		// ∞ * finite = ±∞ (sign depends on operand signs)
 		signA := a.Signbit()
 		signB := b.Signbit()
@@ -465,7 +465,6 @@ func divIEEE754(a, b Float16, rounding RoundingMode) (Float16, error) {
 	f32a := a.ToFloat32()
 	f32b := b.ToFloat32()
 	result := f32a / f32b
-	
 
 	// Use the provided rounding mode for the conversion back to Float16
 	return ToFloat16WithMode(result, ModeExact, rounding)
@@ -492,23 +491,23 @@ func Less(a, b Float16) bool {
 	if a.IsNaN() || b.IsNaN() {
 		return false
 	}
-	
+
 	// Handle zero: -0 == +0 for comparison
 	if a.IsZero() && b.IsZero() {
 		return false
 	}
-	
+
 	// Handle signs
 	signA := a.Signbit()
 	signB := b.Signbit()
-	
+
 	if signA && !signB {
 		return true // negative < positive
 	}
 	if !signA && signB {
 		return false // positive > negative
 	}
-	
+
 	// Same sign: compare magnitudes
 	if signA {
 		// Both negative: larger magnitude is smaller value
@@ -543,7 +542,7 @@ func Min(a, b Float16) Float16 {
 	if b.IsNaN() {
 		return a
 	}
-	
+
 	if Less(a, b) {
 		return a
 	}
@@ -559,7 +558,7 @@ func Max(a, b Float16) Float16 {
 	if b.IsNaN() {
 		return a
 	}
-	
+
 	if Greater(a, b) {
 		return a
 	}
@@ -573,7 +572,7 @@ func AddSlice(a, b []Float16) []Float16 {
 	if len(a) != len(b) {
 		panic("float16: slice length mismatch")
 	}
-	
+
 	result := make([]Float16, len(a))
 	for i := range a {
 		result[i] = Add(a[i], b[i])
@@ -586,7 +585,7 @@ func SubSlice(a, b []Float16) []Float16 {
 	if len(a) != len(b) {
 		panic("float16: slice length mismatch")
 	}
-	
+
 	result := make([]Float16, len(a))
 	for i := range a {
 		result[i] = Sub(a[i], b[i])
@@ -599,7 +598,7 @@ func MulSlice(a, b []Float16) []Float16 {
 	if len(a) != len(b) {
 		panic("float16: slice length mismatch")
 	}
-	
+
 	result := make([]Float16, len(a))
 	for i := range a {
 		result[i] = Mul(a[i], b[i])
@@ -612,7 +611,7 @@ func DivSlice(a, b []Float16) []Float16 {
 	if len(a) != len(b) {
 		panic("float16: slice length mismatch")
 	}
-	
+
 	result := make([]Float16, len(a))
 	for i := range a {
 		result[i] = Div(a[i], b[i])
@@ -643,7 +642,7 @@ func DotProduct(a, b []Float16) Float16 {
 	if len(a) != len(b) {
 		panic("float16: slice length mismatch")
 	}
-	
+
 	var sum Float16 = PositiveZero
 	for i := range a {
 		product := Mul(a[i], b[i])

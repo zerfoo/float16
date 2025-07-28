@@ -258,8 +258,8 @@ func Infinity(sign int) Float16 {
 
 func TestSliceOperationsWithMode(t *testing.T) {
 	t.Run("SubSlice", func(t *testing.T) {
-		a := []Float16{FromBits(0x4400), FromBits(0x4500), FromBits(0x4600)} // [4.0, 5.0, 6.0]
-		b := []Float16{FromBits(0x3C00), FromBits(0x4000), FromBits(0x4200)} // [1.0, 2.0, 3.0]
+		a := []Float16{FromBits(0x4400), FromBits(0x4500), FromBits(0x4600)}    // [4.0, 5.0, 6.0]
+		b := []Float16{FromBits(0x3C00), FromBits(0x4000), FromBits(0x4200)}    // [1.0, 2.0, 3.0]
 		want := []Float16{FromBits(0x4200), FromBits(0x4200), FromBits(0x4200)} // [3.0, 3.0, 3.0]
 		got := SubSlice(a, b)
 		if len(got) != len(want) {
@@ -273,8 +273,8 @@ func TestSliceOperationsWithMode(t *testing.T) {
 	})
 
 	t.Run("MulSlice", func(t *testing.T) {
-		a := []Float16{FromBits(0x3C00), FromBits(0x4000), FromBits(0x4400)} // [1.0, 2.0, 4.0]
-		b := []Float16{FromBits(0x4400), FromBits(0x4400), FromBits(0x4400)} // [4.0, 4.0, 4.0]
+		a := []Float16{FromBits(0x3C00), FromBits(0x4000), FromBits(0x4400)}    // [1.0, 2.0, 4.0]
+		b := []Float16{FromBits(0x4400), FromBits(0x4400), FromBits(0x4400)}    // [4.0, 4.0, 4.0]
 		want := []Float16{FromBits(0x4400), FromBits(0x4800), FromBits(0x4C00)} // [4.0, 8.0, 16.0]
 		got := MulSlice(a, b)
 		if len(got) != len(want) {
@@ -288,8 +288,8 @@ func TestSliceOperationsWithMode(t *testing.T) {
 	})
 
 	t.Run("DivSlice", func(t *testing.T) {
-		a := []Float16{FromBits(0x4400), FromBits(0x4800), FromBits(0x4C00)} // [4.0, 8.0, 16.0]
-		b := []Float16{FromBits(0x3C00), FromBits(0x4000), FromBits(0x4400)} // [1.0, 2.0, 4.0]
+		a := []Float16{FromBits(0x4400), FromBits(0x4800), FromBits(0x4C00)}    // [4.0, 8.0, 16.0]
+		b := []Float16{FromBits(0x3C00), FromBits(0x4000), FromBits(0x4400)}    // [1.0, 2.0, 4.0]
 		want := []Float16{FromBits(0x4400), FromBits(0x4400), FromBits(0x4400)} // [4.0, 4.0, 4.0]
 		got := DivSlice(a, b)
 		if len(got) != len(want) {
@@ -328,7 +328,7 @@ func TestSliceOperationsWithMode(t *testing.T) {
 
 	t.Run("Norm2", func(t *testing.T) {
 		s := []Float16{FromBits(0x4200), FromBits(0x4400)} // 3-4-5 right triangle
-		want := FromBits(0x4500) // 5.0
+		want := FromBits(0x4500)                           // 5.0
 		got := Norm2(s)
 		if got != want {
 			t.Errorf("Norm2() = %v, want %v", got, want)
