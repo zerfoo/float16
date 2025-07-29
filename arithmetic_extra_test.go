@@ -26,6 +26,9 @@ func TestArithmeticExtra(t *testing.T) {
 		{"MulWithMode(0, Inf)", PositiveZero, PositiveInfinity, ModeIEEEArithmetic, RoundNearestEven, QuietNaN, false, "MulWithMode"},
 		{"MulWithMode(NaN, 1)", QuietNaN, FromFloat32(1), ModeExactArithmetic, RoundNearestEven, 0, true, "MulWithMode"},
 		{"MulWithMode(Fast)", FromFloat32(2), FromFloat32(3), ModeFastArithmetic, RoundNearestEven, FromFloat32(6), false, "MulWithMode"},
+		{"MulWithMode(Inf, 0)", PositiveInfinity, PositiveZero, ModeIEEEArithmetic, RoundNearestEven, QuietNaN, false, "MulWithMode"},
+		{"MulWithMode(Inf, 1)", PositiveInfinity, FromFloat32(1), ModeIEEEArithmetic, RoundNearestEven, PositiveInfinity, false, "MulWithMode"},
+		{"MulWithMode(Inf, -1)", PositiveInfinity, FromFloat32(-1), ModeIEEEArithmetic, RoundNearestEven, NegativeInfinity, false, "MulWithMode"},
 
 		// DivWithMode
 		{"DivWithMode(6, 3)", FromFloat32(6), FromFloat32(3), ModeIEEEArithmetic, RoundNearestEven, FromFloat32(2), false, "DivWithMode"},
@@ -34,6 +37,7 @@ func TestArithmeticExtra(t *testing.T) {
 		{"DivWithMode(Inf, Inf)", PositiveInfinity, PositiveInfinity, ModeIEEEArithmetic, RoundNearestEven, QuietNaN, false, "DivWithMode"},
 		{"DivWithMode(NaN, 1)", QuietNaN, FromFloat32(1), ModeExactArithmetic, RoundNearestEven, 0, true, "DivWithMode"},
 		{"DivWithMode(Fast)", FromFloat32(6), FromFloat32(3), ModeFastArithmetic, RoundNearestEven, FromFloat32(2), false, "DivWithMode"},
+		{"DivWithMode(1, Inf)", FromFloat32(1), PositiveInfinity, ModeIEEEArithmetic, RoundNearestEven, PositiveZero, false, "DivWithMode"},
 	}
 
 	for _, tc := range testCases {
