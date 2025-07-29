@@ -123,7 +123,11 @@ func TestFloat32Conversions(t *testing.T) {
 				}
 			case "FromFloat32":
 				res := tc.f16.ToFloat32()
-				if tc.expected.(float32) != res && !math.IsNaN(float64(res)) {
+				if math.IsNaN(float64(tc.expected.(float32))) {
+					if !math.IsNaN(float64(res)) {
+						t.Errorf("Expected NaN, got %v", res)
+					}
+				} else if res != tc.expected.(float32) {
 					t.Errorf("Expected %v, got %v", tc.expected, res)
 				}
 			}
@@ -195,6 +199,9 @@ func TestFromFloat64WithModeExtra(t *testing.T) {
 		{"Normal", 1.0, ModeIEEE, RoundNearestEven, FromFloat64(1.0), false},
 		{"Strict Inf", math.Inf(1), ModeStrict, RoundNearestEven, 0, true},
 		{"Strict NaN", math.NaN(), ModeStrict, RoundNearestEven, 0, true},
+		{"Overflow", 70000.0, ModeIEEE, RoundNearestEven, PositiveInfinity, false},
+		{"Underflow", 1e-40, ModeIEEE, RoundNearestEven, PositiveZero, false},
+		{"Underflow Strict", 1e-40, ModeStrict, RoundNearestEven, 0, true},
 	}
 
 	for _, tc := range testCases {
