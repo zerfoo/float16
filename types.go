@@ -31,6 +31,10 @@ const (
 	Float32ExponentLen  = 8   // Float32 exponent bits
 	Float32MantissaLen  = 23  // Float32 mantissa bits
 
+	// Float64 constants for conversion
+	Float64ExponentBias = 1023 // IEEE 754 double precision bias
+	Float64MantissaLen  = 52   // Float64 mantissa bits
+
 	// Special exponent values
 	ExponentZero     = 0  // Zero and subnormal numbers
 	ExponentInfinity = 31 // Infinity and NaN

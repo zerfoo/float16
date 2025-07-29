@@ -501,7 +501,50 @@ func (f Float16) ToFloat32() float32 {
 
 // ToFloat64 converts a Float16 value to float64 with full precision
 func (f Float16) ToFloat64() float64 {
-	return float64(f.ToFloat32())
+	// Handle special cases
+	if f.IsZero() {
+		if f.Signbit() {
+			return math.Copysign(0.0, -1.0)
+		}
+		return 0.0
+	}
+
+	if f.IsNaN() {
+		sign := uint64(0)
+		if f.Signbit() {
+			sign = 0x8000000000000000
+		}
+		payload := uint64(f & MantissaMask)
+		return math.Float64frombits(sign | 0x7FF8000000000000 | (payload << (Float64MantissaLen - MantissaLen)))
+	}
+
+	if f.IsInf(0) {
+		if f.Signbit() {
+			return math.Inf(-1)
+		}
+		return math.Inf(1)
+	}
+
+	// Extract components
+	sign, exp16, mant16 := f.extractComponents()
+
+	if exp16 == 0 { // Subnormal
+		// val = sign * 0.mantissa * 2^-14
+		// smallest subnormal: 1 * 2^-10 * 2^-14 = 2^-24
+		// largest subnormal: (1023/1024) * 2^-14
+		val := float64(mant16) * math.Pow(2, -24)
+		if sign != 0 {
+			return -val
+		}
+		return val
+	}
+
+	// Normal number
+	exp64 := int64(exp16) - ExponentBias + Float64ExponentBias
+	mant64 := uint64(mant16) << (Float64MantissaLen - MantissaLen)
+
+	bits := (uint64(sign) << 63) | (uint64(exp64) << 52) | mant64
+	return math.Float64frombits(bits)
 }
 
 // FromFloat32 converts a float32 to Float16 (with potential precision loss)

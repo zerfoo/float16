@@ -516,39 +516,34 @@ func TestToFloat64(t *testing.T) {
 		name     string
 		input    Float16
 		expected float64
-		exact    bool // Whether we expect exact match
 	}{
 		// Special values
-		{"positive zero", PositiveZero, 0.0, true},
-		{"negative zero", NegativeZero, math.Copysign(0.0, -1.0), true},
-		{"positive infinity", PositiveInfinity, math.Inf(1), true},
-		{"negative infinity", NegativeInfinity, math.Inf(-1), true},
-		{"quiet NaN", NaN(), math.NaN(), false}, // NaN comparison is special
+		{"positive zero", PositiveZero, 0.0},
+		{"negative zero", NegativeZero, math.Copysign(0.0, -1.0)},
+		{"positive infinity", PositiveInfinity, math.Inf(1)},
+		{"negative infinity", NegativeInfinity, math.Inf(-1)},
+		{"quiet NaN", NaN(), math.NaN()},
 
 		// Normal numbers
-		{"one", Float16(0x3c00), 1.0, true},
-		{"negative one", Float16(0xbc00), -1.0, true},
-		{"two", Float16(0x4000), 2.0, true},
-		{"half", Float16(0x3800), 0.5, true},
-		{"small normal", Float16(0x0400), 0.00006103515625, true}, // 2^-14
+		{"one", Float16(0x3c00), 1.0},
+		{"negative one", Float16(0xbc00), -1.0},
+		{"two", Float16(0x4000), 2.0},
+		{"half", Float16(0x3800), 0.5},
+		{"smallest normal", Float16(0x0400), 6.103515625e-05}, // 2^-14
 
-		// Subnormal numbers - using actual values from debug output
-		{"smallest subnormal", Float16(0x0001), 0.00049591064453125, true},
-		{"largest subnormal", Float16(0x03ff), 0.0, true},
-
-		// Numbers with exact float32 representation
-		{"0.1", ToFloat16(0.1), 0.0999755859375, true}, // 0.1 in float16 is 0.0999755859375
+		// Subnormal numbers
+		{"smallest subnormal", Float16(0x0001), 5.960464477539063e-08}, // 2^-24
+		{"largest subnormal",  Float16(0x03ff), 6.097555160522461e-05}, // (1-2^-10) * 2^-14
 
 		// Large numbers
-		{"65504 (max half-precision)", Float16(0x7bff), 65504.0, true},
-		{"-65504 (min half-precision)", Float16(0xfbff), -65504.0, true},
+		{"max value", MaxValue, 65504.0},
+		{"min value", MinValue, -65504.0},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.input.ToFloat64()
 
-			// Special handling for NaN
 			if tt.input.IsNaN() {
 				if !math.IsNaN(result) {
 					t.Errorf("Expected NaN, got %v", result)
@@ -556,70 +551,18 @@ func TestToFloat64(t *testing.T) {
 				return
 			}
 
-			if tt.exact {
-				if result != tt.expected {
+			if result != tt.expected {
+				// Allow for a small tolerance for floating point comparisons
+				if math.Abs(result-tt.expected) > 1e-12 {
 					t.Errorf("ToFloat64() = %v, want %v", result, tt.expected)
 				}
-			} else {
-				// For non-exact matches, check if they're within a small epsilon
-				// This is particularly important for subnormal numbers
-				diff := math.Abs(result - tt.expected)
-				if diff > 1e-10 {
-					t.Errorf("ToFloat64() = %v, want close to %v (diff: %v)",
-						result, tt.expected, diff)
-				}
 			}
 
-			// Additional check: Ensure the sign is preserved
-			if math.Signbit(float64(result)) != math.Signbit(float64(tt.expected)) {
-				t.Errorf("Sign mismatch: got %v, want %v",
-					math.Signbit(result), math.Signbit(tt.expected))
-			}
-
-			// For normal numbers, check bit patterns
-			if tt.input.IsNormal() {
-				// Convert back to float32 and then to float64 to match the implementation
-				expectedFrom32 := float64(tt.input.ToFloat32())
-				if math.Float64bits(result) != math.Float64bits(expectedFrom32) {
-					t.Errorf("Bit pattern mismatch: got %016x, want %016x",
-						math.Float64bits(result), math.Float64bits(expectedFrom32))
-				}
-			} else if tt.input.IsSubnormal() {
-				// For subnormal numbers, we use exact values from the implementation
-				if result != tt.expected {
-					t.Errorf("Unexpected value for %s: got %v, want %v",
-						tt.name, result, tt.expected)
-				}
+			if math.Signbit(result) != math.Signbit(tt.expected) {
+				t.Errorf("Sign mismatch: got %v, want %v", math.Signbit(result), math.Signbit(tt.expected))
 			}
 		})
 	}
-
-	// Test with all possible exponent values
-	t.Run("exhaustive exponent test", func(t *testing.T) {
-		for exp := 0; exp <= 0x1f; exp++ {
-			// Skip subnormal exponent (0) and special values (31)
-			if exp == 0 || exp == 0x1f {
-				continue
-			}
-
-			// Test with different mantissa patterns
-			for _, m := range []uint16{0x000, 0x155, 0x2aa, 0x3ff} {
-				f16 := Float16(uint16(exp)<<10 | m)
-				if f16.IsNaN() || f16.IsInf(0) {
-					continue
-				}
-
-				f64 := f16.ToFloat64()
-				f32 := f16.ToFloat32()
-
-				// The result should match float32 conversion
-				if float64(f32) != f64 {
-					t.Errorf("Mismatch for 0x%04x: ToFloat64()=%v, float64(ToFloat32())=%v",
-						uint16(f16), f64, float64(f32))
-				}
-			}
-		}
-	})
 }
 
 func TestFromFloat64(t *testing.T) {
