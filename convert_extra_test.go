@@ -202,6 +202,7 @@ func TestFromFloat64WithModeExtra(t *testing.T) {
 		{"Overflow", 70000.0, ModeIEEE, RoundNearestEven, PositiveInfinity, false},
 		{"Underflow", 1e-40, ModeIEEE, RoundNearestEven, PositiveZero, false},
 		{"Underflow Strict", 1e-40, ModeStrict, RoundNearestEven, 0, true},
+		{"Subnormal", 1e-39, ModeIEEE, RoundNearestEven, FromBits(0x0000), false},
 	}
 
 	for _, tc := range testCases {
