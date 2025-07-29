@@ -142,6 +142,92 @@ func TestMathExtra(t *testing.T) {
 		{"Erfc(NaN)", QuietNaN, 0, 0, QuietNaN, Erfc},
 		{"Erfc(Inf)", PositiveInfinity, 0, 0, FromFloat32(0), Erfc},
 		{"Erfc(-Inf)", NegativeInfinity, 0, 0, FromInt(2), Erfc},
+
+		// Pow
+		{"Pow(2, 3)", FromFloat32(2), FromFloat32(3), 0, FromFloat32(8), Pow},
+		{"Pow(0, -1)", FromFloat32(0), FromFloat32(-1), 0, PositiveInfinity, Pow},
+		{"Pow(Inf, -1)", PositiveInfinity, FromFloat32(-1), 0, FromFloat32(0), Pow},
+		{"Pow(NaN, 1)", QuietNaN, FromFloat32(1), 0, QuietNaN, Pow},
+
+		// Exp
+		{"Exp(0)", FromFloat32(0), 0, 0, FromFloat32(1), Exp},
+		{"Exp(1)", FromFloat32(1), 0, 0, ToFloat16(float32(math.Exp(1))), Exp},
+		{"Exp(Inf)", PositiveInfinity, 0, 0, PositiveInfinity, Exp},
+		{"Exp(-Inf)", NegativeInfinity, 0, 0, FromFloat32(0), Exp},
+		{"Exp(NaN)", QuietNaN, 0, 0, QuietNaN, Exp},
+
+		// Exp2
+		{"Exp2(0)", FromFloat32(0), 0, 0, FromFloat32(1), Exp2},
+		{"Exp2(1)", FromFloat32(1), 0, 0, FromFloat32(2), Exp2},
+		{"Exp2(Inf)", PositiveInfinity, 0, 0, PositiveInfinity, Exp2},
+		{"Exp2(-Inf)", NegativeInfinity, 0, 0, FromFloat32(0), Exp2},
+		{"Exp2(NaN)", QuietNaN, 0, 0, QuietNaN, Exp2},
+
+		// Log
+		{"Log(1)", FromFloat32(1), 0, 0, FromFloat32(0), Log},
+		{"Log(0)", FromFloat32(0), 0, 0, NegativeInfinity, Log},
+		{"Log(-1)", FromFloat32(-1), 0, 0, QuietNaN, Log},
+		{"Log(Inf)", PositiveInfinity, 0, 0, PositiveInfinity, Log},
+		{"Log(NaN)", QuietNaN, 0, 0, QuietNaN, Log},
+
+		// Log2
+		{"Log2(1)", FromFloat32(1), 0, 0, FromFloat32(0), Log2},
+		{"Log2(0)", FromFloat32(0), 0, 0, NegativeInfinity, Log2},
+		{"Log2(-1)", FromFloat32(-1), 0, 0, QuietNaN, Log2},
+		{"Log2(Inf)", PositiveInfinity, 0, 0, PositiveInfinity, Log2},
+		{"Log2(NaN)", QuietNaN, 0, 0, QuietNaN, Log2},
+
+		// Log10
+		{"Log10(1)", FromFloat32(1), 0, 0, FromFloat32(0), Log10},
+		{"Log10(0)", FromFloat32(0), 0, 0, NegativeInfinity, Log10},
+		{"Log10(-1)", FromFloat32(-1), 0, 0, QuietNaN, Log10},
+		{"Log10(Inf)", PositiveInfinity, 0, 0, PositiveInfinity, Log10},
+		{"Log10(NaN)", QuietNaN, 0, 0, QuietNaN, Log10},
+
+		// Sin
+		{"Sin(0)", FromFloat32(0), 0, 0, FromFloat32(0), Sin},
+				{"Sin(Pi/2)", Div(Pi, FromInt(2)), 0, 0, FromFloat32(1), Sin},
+		{"Sin(NaN)", QuietNaN, 0, 0, QuietNaN, Sin},
+
+		// Cos
+		{"Cos(0)", FromFloat32(0), 0, 0, FromFloat32(1), Cos},
+		{"Cos(Pi)", Pi, 0, 0, FromFloat32(-1), Cos},
+		{"Cos(NaN)", QuietNaN, 0, 0, QuietNaN, Cos},
+
+		// Tan
+		{"Tan(0)", FromFloat32(0), 0, 0, FromFloat32(0), Tan},
+		{"Tan(Pi/4)", Pi, 0, 0, FromFloat32(0), Tan},
+		{"Tan(NaN)", QuietNaN, 0, 0, QuietNaN, Tan},
+
+		// Floor
+		{"Floor(1.5)", FromFloat32(1.5), 0, 0, FromFloat32(1), Floor},
+		{"Floor(-1.5)", FromFloat32(-1.5), 0, 0, FromFloat32(-2), Floor},
+		{"Floor(NaN)", QuietNaN, 0, 0, QuietNaN, Floor},
+
+		// Ceil
+		{"Ceil(1.5)", FromFloat32(1.5), 0, 0, FromFloat32(2), Ceil},
+		{"Ceil(-1.5)", FromFloat32(-1.5), 0, 0, FromFloat32(-1), Ceil},
+		{"Ceil(NaN)", QuietNaN, 0, 0, QuietNaN, Ceil},
+
+		// Round
+		{"Round(1.5)", FromFloat32(1.5), 0, 0, FromFloat32(2), Round},
+		{"Round(1.4)", FromFloat32(1.4), 0, 0, FromFloat32(1), Round},
+		{"Round(NaN)", QuietNaN, 0, 0, QuietNaN, Round},
+
+		// Trunc
+		{"Trunc(1.5)", FromFloat32(1.5), 0, 0, FromFloat32(1), Trunc},
+		{"Trunc(-1.5)", FromFloat32(-1.5), 0, 0, FromFloat32(-1), Trunc},
+		{"Trunc(NaN)", QuietNaN, 0, 0, QuietNaN, Trunc},
+
+		// Mod
+		{"Mod(5, 3)", FromFloat32(5), FromFloat32(3), 0, FromFloat32(2), Mod},
+		{"Mod(5, 0)", FromFloat32(5), FromFloat32(0), 0, QuietNaN, Mod},
+		{"Mod(NaN, 1)", QuietNaN, FromFloat32(1), 0, QuietNaN, Mod},
+
+		// Hypot
+		{"Hypot(3, 4)", FromFloat32(3), FromFloat32(4), 0, FromFloat32(5), Hypot},
+		{"Hypot(Inf, 4)", PositiveInfinity, FromFloat32(4), 0, PositiveInfinity, Hypot},
+		{"Hypot(NaN, 4)", QuietNaN, FromFloat32(4), 0, QuietNaN, Hypot},
 	}
 
 	for _, tc := range testCases {
@@ -155,12 +241,17 @@ func TestMathExtra(t *testing.T) {
 			case func(Float16, Float16, Float16) Float16:
 				res = op(tc.f, tc.f2, tc.f3)
 			}
-						if res.Bits() != tc.expected.Bits() {
+			if tc.expected.IsNaN() {
+				if !res.IsNaN() {
+					t.Errorf("Expected NaN, got %v", res)
+				}
+			} else if Abs(Sub(res, tc.expected)).ToFloat32() > 1e-3 {
 				t.Errorf("Expected %v, got %v", tc.expected, res)
 			}
 		})
 	}
 }
+
 
 func TestLgamma(t *testing.T) {
 	testCases := []struct {

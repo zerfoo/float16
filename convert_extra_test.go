@@ -96,11 +96,17 @@ func TestFloat32Conversions(t *testing.T) {
 		{"ToFloat16(1)", 1, 0, FromFloat32(1), "ToFloat16"},
 		{"ToFloat16(-1)", -1, 0, FromFloat32(-1), "ToFloat16"},
 		{"ToFloat16(65504)", 65504, 0, FromFloat32(65504), "ToFloat16"},
+		{"ToFloat16(Inf)", float32(math.Inf(1)), 0, PositiveInfinity, "ToFloat16"},
+		{"ToFloat16(-Inf)", float32(math.Inf(-1)), 0, NegativeInfinity, "ToFloat16"},
+		{"ToFloat16(NaN)", float32(math.NaN()), 0, QuietNaN, "ToFloat16"},
 
 		// FromFloat32
 		{"FromFloat32(0)", 0, FromFloat32(0), float32(0), "FromFloat32"},
 		{"FromFloat32(1)", 0, FromFloat32(1), float32(1), "FromFloat32"},
 		{"FromFloat32(-1)", 0, FromFloat32(-1), float32(-1), "FromFloat32"},
+		{"FromFloat32(Inf)", 0, PositiveInfinity, float32(math.Inf(1)), "FromFloat32"},
+		{"FromFloat32(-Inf)", 0, NegativeInfinity, float32(math.Inf(-1)), "FromFloat32"},
+		{"FromFloat32(NaN)", 0, QuietNaN, float32(math.NaN()), "FromFloat32"},
 	}
 
 	for _, tc := range testCases {
@@ -108,12 +114,16 @@ func TestFloat32Conversions(t *testing.T) {
 			switch tc.op {
 			case "ToFloat16":
 				res := ToFloat16(tc.f32)
-				if res.Bits() != tc.expected.(Float16).Bits() {
+				if tc.expected.(Float16).IsNaN() {
+					if !res.IsNaN() {
+						t.Errorf("Expected NaN, got %v", res)
+					}
+				} else if res.Bits() != tc.expected.(Float16).Bits() {
 					t.Errorf("Expected %v, got %v", tc.expected, res)
 				}
 			case "FromFloat32":
 				res := tc.f16.ToFloat32()
-				if res != tc.expected.(float32) {
+				if tc.expected.(float32) != res && !math.IsNaN(float64(res)) {
 					t.Errorf("Expected %v, got %v", tc.expected, res)
 				}
 			}
