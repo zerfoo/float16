@@ -645,16 +645,16 @@ func TestFromFloat64WithMode(t *testing.T) {
 	})
 
 	// Test different rounding modes
-	roundingTests := []struct {
+		roundingTests := []struct {
 		input     float64
 		roundMode RoundingMode
 		expected  Float16
 		name      string
 	}{
 		{1.2, testRoundNearestEven, 0x3CCD, "1.2 to nearest even"},
-		{1.2, testRoundToZero, 0x3CCC, "1.2 toward zero"},
-		{1.2, testRoundUp, 0x3CCD, "1.2 toward +inf"},
-		{-1.2, testRoundDown, 0xBCCD, "-1.2 toward -inf"},
+		{1.2, testRoundToZero, 0x3C00, "1.2 toward zero"},
+		{1.2, testRoundUp, 0x4000, "1.2 toward +inf"},
+		{-1.2, testRoundDown, 0xC000, "-1.2 toward -inf"},
 	}
 
 	for _, test := range roundingTests {
@@ -665,7 +665,7 @@ func TestFromFloat64WithMode(t *testing.T) {
 			}
 			if result != test.expected {
 				t.Errorf("FromFloat64WithMode(%g, %v) = 0x%04x, expected 0x%04x",
-					test.input, test.roundMode, result, test.expected)
+					test.input, test.roundMode, result.Bits(), test.expected.Bits())
 			}
 		})
 	}
