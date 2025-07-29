@@ -144,11 +144,17 @@ func TestFloat64Conversions(t *testing.T) {
 		{"FromFloat64(1)", 1, 0, FromFloat64(1), "FromFloat64"},
 		{"FromFloat64(-1)", -1, 0, FromFloat64(-1), "FromFloat64"},
 		{"FromFloat64(65504)", 65504, 0, FromFloat64(65504), "FromFloat64"},
+		{"FromFloat64(Inf)", math.Inf(1), 0, PositiveInfinity, "FromFloat64"},
+		{"FromFloat64(-Inf)", math.Inf(-1), 0, NegativeInfinity, "FromFloat64"},
+		{"FromFloat64(NaN)", math.NaN(), 0, QuietNaN, "FromFloat64"},
 
 		// ToFloat64
 		{"ToFloat64(0)", 0, FromFloat64(0), float64(0), "ToFloat64"},
 		{"ToFloat64(1)", 0, FromFloat64(1), float64(1), "ToFloat64"},
 		{"ToFloat64(-1)", 0, FromFloat64(-1), float64(-1), "ToFloat64"},
+		{"ToFloat64(Inf)", 0, PositiveInfinity, math.Inf(1), "ToFloat64"},
+		{"ToFloat64(-Inf)", 0, NegativeInfinity, math.Inf(-1), "ToFloat64"},
+		{"ToFloat64(NaN)", 0, QuietNaN, math.NaN(), "ToFloat64"},
 	}
 
 	for _, tc := range testCases {
@@ -156,12 +162,20 @@ func TestFloat64Conversions(t *testing.T) {
 			switch tc.op {
 			case "FromFloat64":
 				res := FromFloat64(tc.f64)
-				if res.Bits() != tc.expected.(Float16).Bits() {
+				if tc.expected.(Float16).IsNaN() {
+					if !res.IsNaN() {
+						t.Errorf("Expected NaN, got %v", res)
+					}
+				} else if res.Bits() != tc.expected.(Float16).Bits() {
 					t.Errorf("Expected %v, got %v", tc.expected, res)
 				}
 			case "ToFloat64":
 				res := tc.f16.ToFloat64()
-				if res != tc.expected.(float64) {
+				if math.IsNaN(tc.expected.(float64)) {
+					if !math.IsNaN(res) {
+						t.Errorf("Expected NaN, got %v", res)
+					}
+				} else if res != tc.expected.(float64) {
 					t.Errorf("Expected %v, got %v", tc.expected, res)
 				}
 			}
