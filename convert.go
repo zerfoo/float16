@@ -44,46 +44,20 @@ func ToFloat16(f32 float32) Float16 {
 		return Float16((uint16(sign) << 15) | 0x7C00 | nanMant)
 	}
 
-	// For very small numbers that would be subnormal in float16
-	if exp32 <= 112 { // 127 - 15 (float32 bias - float16 bias)
-		// This would be subnormal or zero in float16
-		if exp32 <= 101 { // 127 - 15 - 11 (11 bits of precision)
-			// Too small to represent, flush to zero
-			if sign != 0 {
-				return NegativeZero
-			}
-			return PositiveZero
-		}
-
-		// Subnormal in float16
-		shift := 125 - exp32 // 126 - exp32 + 1 (add implicit leading 1)
-		mant32 |= 0x00800000 // Add implicit leading 1
-		mant16 := uint16((mant32 >> (shift + 13)) & 0x03FF)
-
-		// Handle rounding
-		roundBit := (mant32 >> (shift + 12)) & 0x1
-		stickyMask := uint32((1 << (shift + 12)) - 1)
-		stickyBit := uint32(0)
-		if (mant32 & stickyMask) != 0 {
-			stickyBit = 1
-		}
-
-		if (roundBit | stickyBit) != 0 {
-			mant16++
-			// Check for carry
-			if (mant16 & 0x0400) != 0 {
-				mant16 = 0x0200 // 1.0 * 2^-10 (smallest normal)
-				exp32 = 0x71    // -14 + 127 (float32 bias)
-				return Float16((uint16(sign) << 15) | (uint16(exp32-0x70) << 10) | (mant16 & 0x03FF))
-			}
-		}
-
-		return Float16((uint16(sign) << 15) | mant16)
+	// For subnormal float32, we need to convert to float16 subnormal
+	if exp32 == 0 {
+		// The value is subnormal, so we need to convert it to a float16 subnormal
+		// or flush to zero if it's too small.
+		// A float32 subnormal is value * 2^-126.
+		// We need to convert it to a float16 subnormal, which is value * 2^-14.
+		// So we need to shift the mantissa by 126 - 14 = 112 bits.
+		// Since the float32 mantissa has 23 bits, we will lose a lot of precision.
+		// We can approximate this by converting the float32 to float64 and then to float16.
+		return FromFloat64(float64(f32))
 	}
-
 	// Normal number in float16
-	exp16 := exp32 - 0x70 // float32 bias (127) - float16 bias (15) + 1 (for rounding)
-	if exp16 >= 0x1F {
+	exp16 := exp32 - 127 + 15
+	if exp16 >= 31 {
 		// Overflow
 		if sign != 0 {
 			return NegativeInfinity
@@ -91,17 +65,30 @@ func ToFloat16(f32 float32) Float16 {
 		return PositiveInfinity
 	}
 
+	if exp16 <= 0 {
+		// Underflow to subnormal
+		shift := uint(1 - exp16)
+		mant32 |= 0x800000 // Add implicit leading 1
+		mant16 := uint16(mant32 >> (shift + 13))
+		// Rounding
+		roundBit := (mant32 >> (shift + 12)) & 1
+		if roundBit != 0 {
+			mant16++
+		}
+		return Float16((uint16(sign) << 15) | mant16)
+	}
+
 	// Extract mantissa bits (10 bits) with rounding
-	mant16 := uint16((mant32 + 0x00000FFF + ((mant32 >> 13) & 1)) >> 13)
+	mant16 := uint16((mant32 + 0x1000) >> 13)
 
 	// Check for overflow in mantissa (due to rounding)
 	if (mant16 & 0x0400) != 0 {
-		mant16 >>= 1
+		mant16 = 0
 		exp16++
 	}
 
 	// Check for overflow after rounding
-	if exp16 >= 0x1F {
+	if exp16 >= 31 {
 		if sign != 0 {
 			return NegativeInfinity
 		}
