@@ -44,20 +44,23 @@ func fromFloat32New(f32 float32) Float16 {
 	}
 
 	// Handle normal numbers
+	// Add implicit 1
+	mant |= 1 << 23
+
 	// For float32 to float16, we need to round the 23-bit mantissa to 10 bits
 	// We work with the original 23-bit mantissa and round to get 10 bits
-	
+
 	// Round to nearest even
 	// Look at bit 12 (guard), bits 11-0 (round/sticky)
 	guard := (mant >> 12) & 1
 	sticky := mant & 0xFFF
 	lsb := (mant >> 13) & 1
-	
+
 	// Round up if: guard=1 AND (sticky!=0 OR lsb=1)
 	if guard != 0 && (sticky != 0 || lsb != 0) {
 		mant += 1 << 13
 	}
-	
+
 	// Check for mantissa overflow after rounding
 	if mant >= 1<<24 {
 		// Mantissa overflowed, increment exponent
@@ -72,6 +75,6 @@ func fromFloat32New(f32 float32) Float16 {
 
 	// Extract the 10-bit mantissa (bits 22-13 of the original 23-bit mantissa)
 	mantissa10 := (mant >> 13) & 0x3FF
-	
+
 	return Float16(uint16(sign<<15) | uint16(exp<<10) | uint16(mantissa10))
 }

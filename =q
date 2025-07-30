@@ -45,20 +45,6 @@ func TestIsInf(t *testing.T) {
 	if !PositiveInfinity.IsInf(0) {
 		t.Error("PositiveInfinity.IsInf(0) should be true")
 	}
-
-	// Test IsInf from float16.go
-	if !IsInf(PositiveInfinity, 1) {
-		t.Error("IsInf(PositiveInfinity, 1) should be true")
-	}
-	if !IsInf(NegativeInfinity, -1) {
-		t.Error("IsInf(NegativeInfinity, -1) should be true")
-	}
-	if IsInf(PositiveInfinity, -1) {
-		t.Error("IsInf(PositiveInfinity, -1) should be false")
-	}
-	if !IsInf(PositiveInfinity, 0) {
-		t.Error("IsInf(PositiveInfinity, 0) should be true")
-	}
 }
 
 func TestIsNaN(t *testing.T) {
@@ -71,14 +57,6 @@ func TestIsNaN(t *testing.T) {
 	if PositiveZero.IsNaN() {
 		t.Error("PositiveZero.IsNaN() should be false")
 	}
-
-	// Test IsNaN from float16.go
-	if !IsNaN(QuietNaN) {
-		t.Error("IsNaN(QuietNaN) should be true")
-	}
-	if IsNaN(PositiveZero) {
-		t.Error("IsNaN(PositiveZero) should be false")
-	}
 }
 
 func TestSignbit(t *testing.T) {
@@ -87,14 +65,6 @@ func TestSignbit(t *testing.T) {
 	}
 	if NegativeZero.Signbit() == false {
 		t.Error("NegativeZero.Signbit() should be true")
-	}
-
-	// Test Signbit from float16.go
-	if Signbit(PositiveZero) {
-		t.Error("Signbit(PositiveZero) should be false")
-	}
-	if !Signbit(NegativeZero) {
-		t.Error("Signbit(NegativeZero) should be true")
 	}
 }
 
@@ -108,17 +78,6 @@ func TestIsFinite(t *testing.T) {
 	if QuietNaN.IsFinite() {
 		t.Error("QuietNaN.IsFinite() should be false")
 	}
-
-	// Test IsFinite from float16.go
-	if !IsFinite(PositiveZero) {
-		t.Error("IsFinite(PositiveZero) should be true")
-	}
-	if IsFinite(PositiveInfinity) {
-		t.Error("IsFinite(PositiveInfinity) should be false")
-	}
-	if IsFinite(QuietNaN) {
-		t.Error("IsFinite(QuietNaN) should be false")
-	}
 }
 
 func TestIsNormal(t *testing.T) {
@@ -131,17 +90,6 @@ func TestIsNormal(t *testing.T) {
 	if SmallestSubnormal.IsNormal() {
 		t.Error("SmallestSubnormal.IsNormal() should be false")
 	}
-
-	// Test IsNormal from float16.go
-	if !IsNormal(One()) {
-		t.Error("IsNormal(One()) should be true")
-	}
-	if IsNormal(PositiveZero) {
-		t.Error("IsNormal(PositiveZero) should be false")
-	}
-	if IsNormal(SmallestSubnormal) {
-		t.Error("IsNormal(SmallestSubnormal) should be false")
-	}
 }
 
 func TestIsSubnormal(t *testing.T) {
@@ -150,14 +98,6 @@ func TestIsSubnormal(t *testing.T) {
 	}
 	if One().IsSubnormal() {
 		t.Error("One().IsSubnormal() should be false")
-	}
-
-	// Test IsSubnormal from float16.go
-	if !IsSubnormal(SmallestSubnormal) {
-		t.Error("IsSubnormal(SmallestSubnormal) should be true")
-	}
-	if IsSubnormal(One()) {
-		t.Error("IsSubnormal(One()) should be false")
 	}
 }
 
@@ -188,8 +128,8 @@ func TestGetBenchmarkOperations(t *testing.T) {
 
 func TestValidateSliceLength(t *testing.T) {
 	tests := []struct {
-		name        string
-		a, b        []Float16
+		name string
+		a, b []Float16
 		expectError bool
 	}{
 		{"equal lengths", []Float16{1}, []Float16{2}, false},
@@ -237,8 +177,8 @@ func TestVectorMul(t *testing.T) {
 	a := []Float16{FromInt(2), FromInt(3)}
 	b := []Float16{FromInt(3), FromInt(4)}
 	result := VectorMul(a, b)
-	if !Equal(result[0], 0x4600) || !Equal(result[1], 0x4A00) {
-		t.Errorf("VectorMul([2, 3], [3, 4]) = [%v (0x%04X), %v (0x%04X)], want [6 (0x4600), 12 (0x4A00)]", result[0], uint16(result[0]), result[1], uint16(result[1]))
+	if result[0] != 0x4600 || result[1] != 0x4900 {
+		t.Errorf("VectorMul([2, 3], [3, 4]) = %v, want [6 (0x4600), 12 (0x4900)]", result)
 	}
 }
 

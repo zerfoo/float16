@@ -38,3 +38,39 @@ func TestFromFloat32New(t *testing.T) {
 		})
 	}
 }
+
+func TestFromFloat32New_NaN(t *testing.T) {
+	// Test NaN conversion
+	nan := float32(math.NaN())
+	result := fromFloat32New(nan)
+	if !result.IsNaN() {
+		t.Errorf("Expected NaN, got %v", result)
+	}
+}
+
+func TestFromFloat32New_Extra(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    float32
+		expected Float16
+	}{
+		// Subnormal underflow to zero
+		{"subnormal underflow", 1e-45, 0x0000},
+		// Rounding cases
+		{"round up", 1.9995117, 0x4000}, // just below 2.0, should round to 2.0
+		// Mantissa overflow
+		{"mantissa overflow", 65504.1, 0x7BFF}, // should round to max float16
+		// Exponent overflow after rounding
+		{"exponent overflow", 65536.0, 0x7C00}, // 2^16, should be Inf
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := fromFloat32New(tt.input)
+			if result != tt.expected {
+				t.Errorf("fromFloat32New(%g) = 0x%04x, expected 0x%04x",
+					tt.input, result.Bits(), tt.expected.Bits())
+			}
+		})
+	}
+}

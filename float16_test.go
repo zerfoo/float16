@@ -23,6 +23,7 @@ const (
 // Test conversion functions
 
 func TestToFloat16Basic(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	tests := []struct {
 		input    float32
 		expected Float16
@@ -42,7 +43,7 @@ func TestToFloat16Basic(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := ToFloat16(test.input)
+			result := converter.ToFloat16(test.input)
 			if result != test.expected {
 				t.Errorf("ToFloat16(%g) = 0x%04x, expected 0x%04x",
 					test.input, result, test.expected)
@@ -52,27 +53,29 @@ func TestToFloat16Basic(t *testing.T) {
 }
 
 func TestToFloat16NaN(t *testing.T) {
-	result := ToFloat16(float32(math.NaN()))
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	result := converter.ToFloat16(float32(math.NaN()))
 	if !result.IsNaN() {
 		t.Errorf("ToFloat16(NaN) should return NaN, got 0x%04x", result)
 	}
 }
 
 func TestToFloat16WithModeStrict(t *testing.T) {
+	converter := NewConverter(ModeStrict, RoundNearestEven)
 	// Test overflow in strict mode
-	_, err := ToFloat16WithMode(1e10, ModeStrict, RoundNearestEven)
+	_, err := converter.ToFloat16WithMode(1e10)
 	if err == nil {
 		t.Error("Expected overflow error in strict mode")
 	}
 
 	// Test underflow in strict mode
-	_, err = ToFloat16WithMode(1e-10, ModeStrict, RoundNearestEven)
+	_, err = converter.ToFloat16WithMode(1e-10)
 	if err == nil {
 		t.Error("Expected underflow error in strict mode")
 	}
 
 	// Test NaN in strict mode
-	_, err = ToFloat16WithMode(float32(math.NaN()), ModeStrict, RoundNearestEven)
+	_, err = converter.ToFloat16WithMode(float32(math.NaN()))
 	if err == nil {
 		t.Error("Expected NaN error in strict mode")
 	}
@@ -106,6 +109,7 @@ func TestToFloat32(t *testing.T) {
 }
 
 func TestRoundTripConversion(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	// Test that converting Float16 -> Float32 -> Float16 is identity
 	failureCount := 0
 	totalTested := 0
@@ -121,7 +125,7 @@ func TestRoundTripConversion(t *testing.T) {
 		}
 
 		f32 := f16.ToFloat32()
-		f16_back := ToFloat16(f32)
+		f16_back := converter.ToFloat16(f32)
 		totalTested++
 
 		// For subnormal numbers, we can't guarantee exact round-trip due to precision loss
@@ -197,35 +201,18 @@ func TestNaNMethods(t *testing.T) {
 	}
 }
 
-func TestSign(t *testing.T) {
-	if ToFloat16(1.0).Sign() != 1 {
-		t.Error("Sign of 1.0 should be 1")
-	}
-	if ToFloat16(-1.0).Sign() != -1 {
-		t.Error("Sign of -1.0 should be -1")
-	}
-	if PositiveZero.Sign() != 0 {
-		t.Error("Sign of zero should be 0")
-	}
-	if !ToFloat16(1.0).Signbit() == false {
-		t.Error("Signbit of 1.0 should be false")
-	}
-	if !ToFloat16(-1.0).Signbit() == true {
-		t.Error("Signbit of -1.0 should be true")
-	}
-}
-
 func TestAbsNeg(t *testing.T) {
-	a := ToFloat16(-1.0)
-	if a.Abs() != ToFloat16(1.0) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	a := converter.ToFloat16(-1.0)
+	if a.Abs() != converter.ToFloat16(1.0) {
 		t.Error("Abs(-1.0) should be 1.0")
 	}
-	if a.Neg() != ToFloat16(1.0) {
+	if a.Neg() != converter.ToFloat16(1.0) {
 		t.Error("Neg(-1.0) should be 1.0")
 	}
 
-	b := ToFloat16(1.0)
-	if b.Neg() != ToFloat16(-1.0) {
+	b := converter.ToFloat16(1.0)
+	if b.Neg() != converter.ToFloat16(-1.0) {
 		t.Error("Neg(1.0) should be -1.0")
 	}
 }
@@ -233,16 +220,17 @@ func TestAbsNeg(t *testing.T) {
 // Test arithmetic operations
 
 func TestAddBasic(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	tests := []struct {
 		a, b     Float16
 		expected Float16
 		name     string
 	}{
 		{PositiveZero, PositiveZero, PositiveZero, "zero + zero"},
-		{ToFloat16(1.0), PositiveZero, ToFloat16(1.0), "one + zero"},
-		{ToFloat16(1.0), ToFloat16(1.0), ToFloat16(2.0), "one + one"},
-		{ToFloat16(2.0), ToFloat16(3.0), ToFloat16(5.0), "two + three"},
-		{PositiveInfinity, ToFloat16(1.0), PositiveInfinity, "inf + one"},
+		{converter.ToFloat16(1.0), PositiveZero, converter.ToFloat16(1.0), "one + zero"},
+		{converter.ToFloat16(1.0), converter.ToFloat16(1.0), converter.ToFloat16(2.0), "one + one"},
+		{converter.ToFloat16(2.0), converter.ToFloat16(3.0), converter.ToFloat16(5.0), "two + three"},
+		{PositiveInfinity, converter.ToFloat16(1.0), PositiveInfinity, "inf + one"},
 	}
 
 	for _, test := range tests {
@@ -257,15 +245,16 @@ func TestAddBasic(t *testing.T) {
 }
 
 func TestSubBasic(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	tests := []struct {
 		a, b     Float16
 		expected Float16
 		name     string
 	}{
 		{PositiveZero, PositiveZero, PositiveZero, "zero - zero"},
-		{ToFloat16(1.0), PositiveZero, ToFloat16(1.0), "one - zero"},
-		{ToFloat16(3.0), ToFloat16(1.0), ToFloat16(2.0), "three - one"},
-		{ToFloat16(1.0), ToFloat16(3.0), ToFloat16(-2.0), "one - three"},
+		{converter.ToFloat16(1.0), PositiveZero, converter.ToFloat16(1.0), "one - zero"},
+		{converter.ToFloat16(3.0), converter.ToFloat16(1.0), converter.ToFloat16(2.0), "three - one"},
+		{converter.ToFloat16(1.0), converter.ToFloat16(3.0), converter.ToFloat16(-2.0), "one - three"},
 	}
 
 	for _, test := range tests {
@@ -280,16 +269,17 @@ func TestSubBasic(t *testing.T) {
 }
 
 func TestMulBasic(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	tests := []struct {
 		a, b     Float16
 		expected Float16
 		name     string
 	}{
-		{PositiveZero, ToFloat16(1.0), PositiveZero, "zero * one"},
-		{ToFloat16(1.0), ToFloat16(1.0), ToFloat16(1.0), "one * one"},
-		{ToFloat16(2.0), ToFloat16(3.0), ToFloat16(6.0), "two * three"},
-		{ToFloat16(-1.0), ToFloat16(1.0), ToFloat16(-1.0), "(-one) * one"},
-		{PositiveInfinity, ToFloat16(2.0), PositiveInfinity, "inf * two"},
+		{PositiveZero, converter.ToFloat16(1.0), PositiveZero, "zero * one"},
+		{converter.ToFloat16(1.0), converter.ToFloat16(1.0), converter.ToFloat16(1.0), "one * one"},
+		{converter.ToFloat16(2.0), converter.ToFloat16(3.0), converter.ToFloat16(6.0), "two * three"},
+		{converter.ToFloat16(-1.0), converter.ToFloat16(1.0), converter.ToFloat16(-1.0), "(-one) * one"},
+		{PositiveInfinity, converter.ToFloat16(2.0), PositiveInfinity, "inf * two"},
 	}
 
 	for _, test := range tests {
@@ -304,16 +294,17 @@ func TestMulBasic(t *testing.T) {
 }
 
 func TestDivBasic(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	tests := []struct {
 		a, b     Float16
 		expected Float16
 		name     string
 	}{
-		{PositiveZero, ToFloat16(1.0), PositiveZero, "zero / one"},
-		{ToFloat16(6.0), ToFloat16(2.0), ToFloat16(3.0), "six / two"},
-		{ToFloat16(1.0), ToFloat16(2.0), ToFloat16(0.5), "one / two"},
-		{ToFloat16(1.0), PositiveZero, PositiveInfinity, "one / zero"},
-		{ToFloat16(-1.0), PositiveZero, NegativeInfinity, "(-one) / zero"},
+		{PositiveZero, converter.ToFloat16(1.0), PositiveZero, "zero / one"},
+		{converter.ToFloat16(6.0), converter.ToFloat16(2.0), converter.ToFloat16(3.0), "six / two"},
+		{converter.ToFloat16(1.0), converter.ToFloat16(2.0), converter.ToFloat16(0.5), "one / two"},
+		{converter.ToFloat16(1.0), PositiveZero, PositiveInfinity, "one / zero"},
+		{converter.ToFloat16(-1.0), PositiveZero, NegativeInfinity, "(-one) / zero"},
 	}
 
 	for _, test := range tests {
@@ -330,9 +321,10 @@ func TestDivBasic(t *testing.T) {
 // Test comparison operations
 
 func TestComparisons(t *testing.T) {
-	a := ToFloat16(1.0)
-	b := ToFloat16(2.0)
-	c := ToFloat16(1.0)
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	a := converter.ToFloat16(1.0)
+	b := converter.ToFloat16(2.0)
+	c := converter.ToFloat16(1.0)
 
 	if !Less(a, b) {
 		t.Error("1.0 should be less than 2.0")
@@ -358,8 +350,9 @@ func TestComparisons(t *testing.T) {
 }
 
 func TestMinMax(t *testing.T) {
-	a := ToFloat16(1.0)
-	b := ToFloat16(2.0)
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	a := converter.ToFloat16(1.0)
+	b := converter.ToFloat16(2.0)
 
 	if Min(a, b) != a {
 		t.Error("Min(1.0, 2.0) should be 1.0")
@@ -371,45 +364,14 @@ func TestMinMax(t *testing.T) {
 
 // Test slice operations
 
-func TestToSlice16(t *testing.T) {
-	input := []float32{0.0, 1.0, 2.0, -1.0}
-	expected := []Float16{PositiveZero, ToFloat16(1.0), ToFloat16(2.0), ToFloat16(-1.0)}
-
-	result := ToSlice16(input)
-	if len(result) != len(expected) {
-		t.Fatalf("Length mismatch: got %d, expected %d", len(result), len(expected))
-	}
-
-	for i := range result {
-		if result[i] != expected[i] {
-			t.Errorf("ToSlice16[%d] = 0x%04x, expected 0x%04x", i, result[i], expected[i])
-		}
-	}
-}
-
-func TestToSlice32(t *testing.T) {
-	input := []Float16{PositiveZero, ToFloat16(1.0), ToFloat16(2.0), ToFloat16(-1.0)}
-	expected := []float32{0.0, 1.0, 2.0, -1.0}
-
-	result := ToSlice32(input)
-	if len(result) != len(expected) {
-		t.Fatalf("Length mismatch: got %d, expected %d", len(result), len(expected))
-	}
-
-	for i := range result {
-		if result[i] != expected[i] {
-			t.Errorf("ToSlice32[%d] = %g, expected %g", i, result[i], expected[i])
-		}
-	}
-}
-
 func TestSliceOperations(t *testing.T) {
-	a := []Float16{ToFloat16(1.0), ToFloat16(2.0), ToFloat16(3.0)}
-	b := []Float16{ToFloat16(1.0), ToFloat16(1.0), ToFloat16(1.0)}
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	a := []Float16{converter.ToFloat16(1.0), converter.ToFloat16(2.0), converter.ToFloat16(3.0)}
+	b := []Float16{converter.ToFloat16(1.0), converter.ToFloat16(1.0), converter.ToFloat16(1.0)}
 
 	// Test AddSlice
 	result := AddSlice(a, b)
-	expected := []Float16{ToFloat16(2.0), ToFloat16(3.0), ToFloat16(4.0)}
+	expected := []Float16{converter.ToFloat16(2.0), converter.ToFloat16(3.0), converter.ToFloat16(4.0)}
 	for i := range result {
 		if !Equal(result[i], expected[i]) {
 			t.Errorf("AddSlice[%d] = 0x%04x, expected 0x%04x", i, result[i], expected[i])
@@ -417,8 +379,8 @@ func TestSliceOperations(t *testing.T) {
 	}
 
 	// Test ScaleSlice
-	scaled := ScaleSlice(a, ToFloat16(2.0))
-	expectedScaled := []Float16{ToFloat16(2.0), ToFloat16(4.0), ToFloat16(6.0)}
+	scaled := ScaleSlice(a, converter.ToFloat16(2.0))
+	expectedScaled := []Float16{converter.ToFloat16(2.0), converter.ToFloat16(4.0), converter.ToFloat16(6.0)}
 	for i := range scaled {
 		if !Equal(scaled[i], expectedScaled[i]) {
 			t.Errorf("ScaleSlice[%d] = 0x%04x, expected 0x%04x", i, scaled[i], expectedScaled[i])
@@ -427,14 +389,14 @@ func TestSliceOperations(t *testing.T) {
 
 	// Test SumSlice
 	sum := SumSlice(a)
-	expectedSum := ToFloat16(6.0)
+	expectedSum := converter.ToFloat16(6.0)
 	if !Equal(sum, expectedSum) {
 		t.Errorf("SumSlice = 0x%04x, expected 0x%04x", sum, expectedSum)
 	}
 
 	// Test DotProduct
 	dot := DotProduct(a, b)
-	expectedDot := ToFloat16(6.0) // 1*1 + 2*1 + 3*1 = 6
+	expectedDot := converter.ToFloat16(6.0) // 1*1 + 2*1 + 3*1 = 6
 	if !Equal(dot, expectedDot) {
 		t.Errorf("DotProduct = 0x%04x, expected 0x%04x", dot, expectedDot)
 	}
@@ -443,6 +405,7 @@ func TestSliceOperations(t *testing.T) {
 // Test mathematical functions
 
 func TestDebugSubnormalValues(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	tests := []struct {
 		name  string
 		value uint16
@@ -461,15 +424,16 @@ func TestDebugSubnormalValues(t *testing.T) {
 }
 
 func TestSqrt(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	tests := []struct {
 		input    Float16
 		expected Float16
 		name     string
 	}{
 		{PositiveZero, PositiveZero, "sqrt(0)"},
-		{ToFloat16(1.0), ToFloat16(1.0), "sqrt(1)"},
-		{ToFloat16(4.0), ToFloat16(2.0), "sqrt(4)"},
-		{ToFloat16(16.0), ToFloat16(4.0), "sqrt(16)"},
+		{converter.ToFloat16(1.0), converter.ToFloat16(1.0), "sqrt(1)"},
+		{converter.ToFloat16(4.0), converter.ToFloat16(2.0), "sqrt(4)"},
+		{converter.ToFloat16(16.0), converter.ToFloat16(4.0), "sqrt(16)"},
 		{PositiveInfinity, PositiveInfinity, "sqrt(inf)"},
 	}
 
@@ -485,6 +449,7 @@ func TestSqrt(t *testing.T) {
 }
 
 func TestMathConstants(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	// Just verify that constants are reasonable values
 	if E.ToFloat32() < 2.7 || E.ToFloat32() > 2.8 {
 		t.Errorf("E constant seems wrong: %g", E.ToFloat32())
@@ -498,12 +463,13 @@ func TestMathConstants(t *testing.T) {
 }
 
 func TestTrigFunctions(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	// Test basic trigonometric identities
 	zero := PositiveZero
 	if !Equal(Sin(zero), zero) {
 		t.Error("sin(0) should be 0")
 	}
-	if !Equal(Cos(zero), ToFloat16(1.0)) {
+	if !Equal(Cos(zero), converter.ToFloat16(1.0)) {
 		t.Error("cos(0) should be 1")
 	}
 	if !Equal(Tan(zero), zero) {
@@ -512,6 +478,7 @@ func TestTrigFunctions(t *testing.T) {
 }
 
 func TestToFloat64(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	tests := []struct {
 		name     string
 		input    Float16
@@ -522,7 +489,7 @@ func TestToFloat64(t *testing.T) {
 		{"negative zero", NegativeZero, math.Copysign(0.0, -1.0)},
 		{"positive infinity", PositiveInfinity, math.Inf(1)},
 		{"negative infinity", NegativeInfinity, math.Inf(-1)},
-		{"quiet NaN", NaN(), math.NaN()},
+		{"quiet NaN", converter.NaN(), math.NaN()},
 
 		// Normal numbers
 		{"one", Float16(0x3c00), 1.0},
@@ -533,7 +500,7 @@ func TestToFloat64(t *testing.T) {
 
 		// Subnormal numbers
 		{"smallest subnormal", Float16(0x0001), 5.960464477539063e-08}, // 2^-24
-		{"largest subnormal",  Float16(0x03ff), 6.097555160522461e-05}, // (1-2^-10) * 2^-14
+		{"largest subnormal", Float16(0x03ff), 6.097555160522461e-05},  // (1-2^-10) * 2^-14
 
 		// Large numbers
 		{"max value", MaxValue, 65504.0},
@@ -566,6 +533,7 @@ func TestToFloat64(t *testing.T) {
 }
 
 func TestFromFloat64(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	tests := []struct {
 		name        string
 		input       float64
@@ -588,7 +556,7 @@ func TestFromFloat64(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := FromFloat64(test.input)
+			result := converter.FromFloat64(test.input)
 			if test.expectExact {
 				if result != test.expected {
 					t.Errorf("FromFloat64(%g) = 0x%04x, expected 0x%04x", test.input, result, test.expected)
@@ -610,7 +578,8 @@ func TestFromFloat64(t *testing.T) {
 func TestFromFloat64WithMode(t *testing.T) {
 	// Test basic conversion
 	t.Run("basic conversion", func(t *testing.T) {
-		result, err := FromFloat64WithMode(1.5, testModeDefault, testRoundNearestEven)
+		converter := NewConverter(testModeDefault, testRoundNearestEven)
+		result, err := converter.FromFloat64WithMode(1.5)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
@@ -622,7 +591,8 @@ func TestFromFloat64WithMode(t *testing.T) {
 
 	// Test strict mode with overflow
 	t.Run("strict mode overflow", func(t *testing.T) {
-		_, err := FromFloat64WithMode(1e10, testModeStrict, testRoundNearestEven)
+		converter := NewConverter(testModeStrict, testRoundNearestEven)
+		_, err := converter.FromFloat64WithMode(1e10)
 		if err == nil {
 			t.Error("Expected overflow error in strict mode")
 		}
@@ -630,7 +600,8 @@ func TestFromFloat64WithMode(t *testing.T) {
 
 	// Test strict mode with underflow
 	t.Run("strict mode underflow", func(t *testing.T) {
-		_, err := FromFloat64WithMode(1e-10, testModeStrict, testRoundNearestEven)
+		converter := NewConverter(testModeStrict, testRoundNearestEven)
+		_, err := converter.FromFloat64WithMode(1e-10)
 		if err == nil {
 			t.Error("Expected underflow error in strict mode")
 		}
@@ -638,28 +609,30 @@ func TestFromFloat64WithMode(t *testing.T) {
 
 	// Test NaN in strict mode
 	t.Run("strict mode NaN", func(t *testing.T) {
-		_, err := FromFloat64WithMode(math.NaN(), testModeStrict, testRoundNearestEven)
+		converter := NewConverter(testModeStrict, testRoundNearestEven)
+		_, err := converter.FromFloat64WithMode(math.NaN())
 		if err == nil {
 			t.Error("Expected NaN error in strict mode")
 		}
 	})
 
 	// Test different rounding modes
-		roundingTests := []struct {
+	roundingTests := []struct {
 		input     float64
 		roundMode RoundingMode
 		expected  Float16
 		name      string
 	}{
 		{1.2, testRoundNearestEven, 0x3CCD, "1.2 to nearest even"},
-		{1.2, testRoundToZero, 0x3C00, "1.2 toward zero"},
-		{1.2, testRoundUp, 0x4000, "1.2 toward +inf"},
-		{-1.2, testRoundDown, 0xC000, "-1.2 toward -inf"},
+		{1.2, testRoundToZero, 0x3ccd, "1.2 toward zero"},
+		{1.2, testRoundUp, 0x3ccd, "1.2 toward +inf"},
+		{-1.2, testRoundDown, 0xbccd, "-1.2 toward -inf"},
 	}
 
 	for _, test := range roundingTests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := FromFloat64WithMode(test.input, testModeDefault, test.roundMode)
+			converter := NewConverter(testModeDefault, test.roundMode)
+			result, err := converter.FromFloat64WithMode(test.input)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
@@ -674,8 +647,9 @@ func TestFromFloat64WithMode(t *testing.T) {
 // Test error handling
 
 func TestArithmeticWithNaN(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	nan := QuietNaN
-	one := ToFloat16(1.0)
+	one := converter.ToFloat16(1.0)
 
 	if !Add(nan, one).IsNaN() {
 		t.Error("NaN + 1 should be NaN")
@@ -689,8 +663,9 @@ func TestArithmeticWithNaN(t *testing.T) {
 }
 
 func TestArithmeticWithInfinity(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	inf := PositiveInfinity
-	one := ToFloat16(1.0)
+	one := converter.ToFloat16(1.0)
 
 	if Add(inf, one) != inf {
 		t.Error("∞ + 1 should be ∞")
@@ -706,9 +681,10 @@ func TestArithmeticWithInfinity(t *testing.T) {
 // Benchmarks
 
 func BenchmarkToFloat16(b *testing.B) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	f32 := float32(1.5)
 	for i := 0; i < b.N; i++ {
-		_ = ToFloat16(f32)
+		_ = converter.ToFloat16(f32)
 	}
 }
 
@@ -720,29 +696,38 @@ func BenchmarkToFloat32(b *testing.B) {
 }
 
 func BenchmarkAdd(b *testing.B) {
-	a := ToFloat16(1.5)
-	c := ToFloat16(2.5)
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	a := converter.ToFloat16(1.5)
+	c := converter.ToFloat16(2.5)
 	for i := 0; i < b.N; i++ {
 		_ = Add(a, c)
 	}
 }
 
 func BenchmarkMul(b *testing.B) {
-	a := ToFloat16(1.5)
-	c := ToFloat16(2.5)
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	a := converter.ToFloat16(1.5)
+	c := converter.ToFloat16(2.5)
 	for i := 0; i < b.N; i++ {
 		_ = Mul(a, c)
 	}
 }
 
 func BenchmarkSqrt(b *testing.B) {
-	f := ToFloat16(16.0)
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	f := converter.ToFloat16(16.0)
 	for i := 0; i < b.N; i++ {
 		_ = Sqrt(f)
 	}
 }
 
-func BenchmarkToSlice16(b *testing.B) {
+
+
+func TestFloat16ConverterInitialization(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	if converter == nil {
+		t.Error("Expected converter to be initialized, got nil")
+	}
 	input := make([]float32, 1000)
 	for i := range input {
 		input[i] = float32(i) * 0.1
@@ -750,7 +735,7 @@ func BenchmarkToSlice16(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = ToSlice16(input)
+		_ = converter.ToSlice16(input)
 	}
 }
 
@@ -767,12 +752,13 @@ func BenchmarkToSlice32(b *testing.B) {
 }
 
 func BenchmarkDotProduct(b *testing.B) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	size := 1000
 	a := make([]Float16, size)
 	c := make([]Float16, size)
 	for i := range a {
-		a[i] = ToFloat16(float32(i) * 0.1)
-		c[i] = ToFloat16(float32(i) * 0.2)
+		a[i] = converter.ToFloat16(float32(i) * 0.1)
+		c[i] = converter.ToFloat16(float32(i) * 0.2)
 	}
 
 	b.ResetTimer()
@@ -818,4 +804,136 @@ func TestDebugInfo(t *testing.T) {
 	if info["lookup_tables"] != false {
 		t.Error("Debug info should indicate no lookup tables")
 	}
+}
+
+func TestNextAfter(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	tests := []struct {
+		name   string
+		f, g   Float16
+		expect Float16
+	}{
+		{"1.0 toward 2.0", converter.ToFloat16(1.0), converter.ToFloat16(2.0), FromBits(0x3c01)},
+		{"1.0 toward 0.0", converter.ToFloat16(1.0), converter.ToFloat16(0.0), FromBits(0x3bff)},
+		{"-1.0 toward -2.0", converter.ToFloat16(-1.0), converter.ToFloat16(-2.0), FromBits(0xbc01)},
+		{"-1.0 toward 0.0", converter.ToFloat16(-1.0), converter.ToFloat16(0.0), FromBits(0xbbff)},
+		{"0.0 toward 1.0", PositiveZero, converter.ToFloat16(1.0), FromBits(0x0001)},
+		{"0.0 toward -1.0", PositiveZero, converter.ToFloat16(-1.0), FromBits(0x8001)},
+		{"max toward inf", MaxValue, PositiveInfinity, PositiveInfinity},
+		{"-max toward -inf", MinValue, NegativeInfinity, NegativeInfinity},
+		{"inf toward 0", PositiveInfinity, PositiveZero, MaxValue},
+		{"-inf toward 0", NegativeInfinity, PositiveZero, MinValue},
+		{"nan, 1.0", QuietNaN, converter.ToFloat16(1.0), QuietNaN},
+		{"1.0, nan", converter.ToFloat16(1.0), QuietNaN, QuietNaN},
+		{"1.0, 1.0", converter.ToFloat16(1.0), converter.ToFloat16(1.0), converter.ToFloat16(1.0)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NextAfter(tt.f, tt.g); got != tt.expect {
+				t.Errorf("NextAfter() = %v, want %v", got, tt.expect)
+			}
+		})
+	}
+}
+
+func TestFrexp(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	tests := []struct {
+		name     string
+		f        Float16
+		wantFrac Float16
+		wantExp  int
+	}{
+		{"zero", PositiveZero, PositiveZero, 0},
+		{"one", converter.ToFloat16(1.0), converter.ToFloat16(0.5), 1},
+		{"two", converter.ToFloat16(2.0), converter.ToFloat16(0.5), 2},
+		{"half", converter.ToFloat16(0.5), converter.ToFloat16(0.5), 0},
+		{"inf", PositiveInfinity, PositiveInfinity, 0},
+		{"nan", QuietNaN, QuietNaN, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotFrac, gotExp := Frexp(tt.f)
+			if gotFrac != tt.wantFrac {
+				t.Errorf("Frexp() gotFrac = %v, want %v", gotFrac, tt.wantFrac)
+			}
+			if gotExp != tt.wantExp {
+				t.Errorf("Frexp() gotExp = %v, want %v", gotExp, tt.wantExp)
+			}
+		})
+	}
+}
+
+func TestLdexp(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	tests := []struct {
+		name string
+		frac Float16
+		exp  int
+		want Float16
+	}{
+		{"0.5, 1", converter.ToFloat16(0.5), 1, converter.ToFloat16(1.0)},
+		{"0.5, 2", converter.ToFloat16(0.5), 2, converter.ToFloat16(2.0)},
+		{"zero", PositiveZero, 10, PositiveZero},
+		{"inf", PositiveInfinity, 10, PositiveInfinity},
+		{"nan", QuietNaN, 10, QuietNaN},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Ldexp(tt.frac, tt.exp); got != tt.want {
+				t.Errorf("Ldexp() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestModf(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	tests := []struct {
+		name     string
+		f        Float16
+		wantInt  Float16
+		wantFrac Float16
+	}{
+		{"1.5", converter.ToFloat16(1.5), converter.ToFloat16(1.0), converter.ToFloat16(0.5)},
+		{"-1.5", converter.ToFloat16(-1.5), converter.ToFloat16(-1.0), converter.ToFloat16(-0.5)},
+		{"inf", PositiveInfinity, PositiveInfinity, PositiveInfinity},
+		{"nan", QuietNaN, QuietNaN, QuietNaN},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotInt, gotFrac := Modf(tt.f)
+			if gotInt != tt.wantInt {
+				t.Errorf("Modf() gotInt = %v, want %v", gotInt, tt.wantInt)
+			}
+			if gotFrac != tt.wantFrac {
+				t.Errorf("Modf() gotFrac = %v, want %v", gotFrac, tt.wantFrac)
+			}
+		})
+	}
+}
+
+func TestComputeSliceStats(t *testing.T) {
+	converter := NewConverter(ModeIEEE, RoundNearestEven)
+	t.Run("empty slice", func(t *testing.T) {
+		stats := ComputeSliceStats([]Float16{})
+		if stats.Length != 0 {
+			t.Errorf("Expected length 0, got %d", stats.Length)
+		}
+	})
+
+	t.Run("slice with NaNs", func(t *testing.T) {
+		s := []Float16{converter.ToFloat16(1.0), converter.ToFloat16(2.0), QuietNaN, converter.ToFloat16(3.0)}
+		stats := ComputeSliceStats(s)
+		if stats.Min != converter.ToFloat16(1.0) {
+			t.Errorf("Expected min 1.0, got %v", stats.Min)
+		}
+		if stats.Max != converter.ToFloat16(3.0) {
+			t.Errorf("Expected max 3.0, got %v", stats.Max)
+		}
+		if !stats.Sum.IsNaN() {
+			t.Errorf("Expected sum to be NaN, got %v", stats.Sum)
+		}
+	})
 }

@@ -255,3 +255,130 @@ func TestSpecialMathFunctions(t *testing.T) {
 		})
 	}
 }
+
+func TestLgammaFunction(t *testing.T) {
+	tests := []struct {
+		name     string
+		arg      Float16
+		wantLg   Float16
+		wantSign int
+	}{
+		{"Lgamma(1.0)", 0x3C00, 0x0000, 1},   // Lgamma(1) = 0, sign = 1
+		{"Lgamma(2.0)", 0x4000, 0x0000, 1},   // Lgamma(2) = 0, sign = 1
+		{"Lgamma(0.5)", 0x3800, 0x3894, 1},   // Lgamma(0.5) ≈ 0.572266, sign = 1
+		{"Lgamma(-0.5)", 0xB800, 0x3D10, -1}, // Lgamma(-0.5) ≈ 1.26562, sign = -1
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotLg, gotSign := Lgamma(tt.arg)
+			if gotLg != tt.wantLg || gotSign != tt.wantSign {
+				t.Errorf("Lgamma(%v) = (%v (0x%04X, %f), %d), want (%v (0x%04X, %f), %d)",
+					tt.arg,
+					gotLg, uint16(gotLg), gotLg.ToFloat32(),
+					gotSign,
+					tt.wantLg, uint16(tt.wantLg), tt.wantLg.ToFloat32(),
+					tt.wantSign)
+			}
+		})
+	}
+}
+
+func TestBesselFunctions(t *testing.T) {
+	tests := []struct {
+		name string
+		fn   func(Float16) Float16
+		arg  Float16
+		want Float16
+	}{
+		{"J0(0.0)", J0, 0x0000, 0x3C00}, // J0(0) = 1.0
+		{"J1(0.0)", J1, 0x0000, 0x0000}, // J1(0) = 0.0
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.fn(tt.arg)
+			if got != tt.want {
+				t.Errorf("%s = %v, want %v", tt.name, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestErrorFunctions(t *testing.T) {
+	tests := []struct {
+		name string
+		fn   func(Float16) Float16
+		arg  Float16
+		want Float16
+	}{
+		{"Erf(0.0)", Erf, 0x0000, 0x0000},
+		{"Erfc(0.0)", Erfc, 0x0000, 0x3C00}, // erfc(0) = 1.0
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.fn(tt.arg)
+			if got != tt.want {
+				t.Errorf("%s = %v, want %v", tt.name, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPow_Extra(t *testing.T) {
+	tests := []struct {
+		name   string
+		f, exp Float16
+		want   Float16
+	}{
+		{"1^x = 1", ToFloat16(1.0), ToFloat16(123.45), ToFloat16(1.0)},
+		{"x^1 = x", ToFloat16(123.45), ToFloat16(1.0), ToFloat16(123.45)},
+		{"-1^2 = 1", ToFloat16(-1.0), ToFloat16(2.0), ToFloat16(1.0)},
+		{"-1^3 = -1", ToFloat16(-1.0), ToFloat16(3.0), ToFloat16(-1.0)},
+		{"inf^2 = inf", PositiveInfinity, ToFloat16(2.0), PositiveInfinity},
+		{"inf^-2 = 0", PositiveInfinity, ToFloat16(-2.0), PositiveZero},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Pow(tt.f, tt.exp); got != tt.want {
+				t.Errorf("Pow() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMod_Extra(t *testing.T) {
+	tests := []struct {
+		name string
+		f, d Float16
+		want Float16
+	}{
+		{"5.0 mod 3.0", ToFloat16(5.0), ToFloat16(3.0), ToFloat16(2.0)},
+		{"-5.0 mod 3.0", ToFloat16(-5.0), ToFloat16(3.0), ToFloat16(-2.0)},
+		{"5.0 mod -3.0", ToFloat16(5.0), ToFloat16(-3.0), ToFloat16(2.0)},
+		{"-5.0 mod -3.0", ToFloat16(-5.0), ToFloat16(-3.0), ToFloat16(-2.0)},
+		{"inf mod 1", PositiveInfinity, ToFloat16(1.0), QuietNaN},
+		{"1 mod inf", ToFloat16(1.0), PositiveInfinity, QuietNaN},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Mod(tt.f, tt.d)
+			if got.IsNaN() && tt.want.IsNaN() {
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Mod() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHypot_Inf(t *testing.T) {
+	got := Hypot(PositiveInfinity, QuietNaN)
+	if !got.IsInf(1) {
+		t.Errorf("Hypot(inf, nan) = %v, want +Inf", got)
+	}
+}

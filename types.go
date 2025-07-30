@@ -84,8 +84,8 @@ const (
 type RoundingMode int
 
 const (
-	// RoundNearestEven rounds to nearest, ties to even (IEEE default)
-	RoundNearestEven RoundingMode = iota
+	// DefaultRoundingMode rounds to nearest, ties to even (IEEE default)
+	DefaultRoundingMode RoundingMode = iota
 	// RoundNearestAway rounds to nearest, ties away from zero
 	RoundNearestAway
 	// RoundTowardZero truncates toward zero

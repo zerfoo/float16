@@ -100,8 +100,8 @@ type Config struct {
 // DefaultConfig returns the default package configuration
 func DefaultConfig() *Config {
 	return &Config{
-		DefaultConversionMode: ModeIEEE,
-		DefaultRoundingMode:   RoundNearestEven,
+		DefaultConversionMode: DefaultConversionMode,
+		DefaultRoundingMode:   DefaultRoundingMode,
 		DefaultArithmeticMode: ModeIEEEArithmetic,
 		EnableFastMath:        false,
 	}
@@ -151,7 +151,8 @@ func Zero() Float16 {
 
 // One returns a Float16 value representing 1.0
 func One() Float16 {
-	return ToFloat16(1.0)
+	converter := NewConverter(DefaultConversionMode, DefaultRoundingMode)
+	return converter.ToFloat16(1.0)
 }
 
 // NaN returns a Float16 quiet NaN value
@@ -226,7 +227,8 @@ func Frexp(f Float16) (frac Float16, exp int) {
 
 	f32 := f.ToFloat32()
 	frac32, exp := math.Frexp(float64(f32))
-	return ToFloat16(float32(frac32)), exp
+	converter := NewConverter(DefaultConversionMode, DefaultRoundingMode)
+	return converter.ToFloat16(float32(frac32)), exp
 }
 
 // Ldexp returns frac × 2^exp
@@ -237,7 +239,8 @@ func Ldexp(frac Float16, exp int) Float16 {
 
 	frac32 := frac.ToFloat32()
 	result := math.Ldexp(float64(frac32), exp)
-	return ToFloat16(float32(result))
+	converter := NewConverter(DefaultConversionMode, DefaultRoundingMode)
+	return converter.ToFloat16(float32(result))
 }
 
 // Modf returns integer and fractional floating-point numbers that sum to f
@@ -249,7 +252,8 @@ func Modf(f Float16) (integer, frac Float16) {
 
 	f32 := f.ToFloat32()
 	int32, frac32 := math.Modf(float64(f32))
-	return ToFloat16(float32(int32)), ToFloat16(float32(frac32))
+	converter := NewConverter(DefaultConversionMode, DefaultRoundingMode)
+	return converter.ToFloat16(float32(int32)), converter.ToFloat16(float32(frac32))
 }
 
 // Validation and classification functions
@@ -318,17 +322,17 @@ func GetBenchmarkOperations() map[string]BenchmarkOperation {
 var (
 	// Common integer values
 	Zero16  = PositiveZero
-	One16   = ToFloat16(1.0)
-	Two16   = ToFloat16(2.0)
-	Three16 = ToFloat16(3.0)
-	Four16  = ToFloat16(4.0)
-	Five16  = ToFloat16(5.0)
-	Ten16   = ToFloat16(10.0)
+	One16   = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(1.0)
+	Two16   = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(2.0)
+	Three16 = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(3.0)
+	Four16  = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(4.0)
+	Five16  = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(5.0)
+	Ten16   = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(10.0)
 
 	// Common fractional values
-	Half16    = ToFloat16(0.5)
-	Quarter16 = ToFloat16(0.25)
-	Third16   = ToFloat16(1.0 / 3.0)
+	Half16    = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(0.5)
+	Quarter16 = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(0.25)
+	Third16   = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(1.0 / 3.0)
 
 	// Special mathematical values
 	NaN16  = QuietNaN
@@ -336,8 +340,8 @@ var (
 	NegInf = NegativeInfinity
 
 	// Commonly used constants
-	Deg2Rad = ToFloat16(float32(math.Pi / 180.0)) // Degrees to radians
-	Rad2Deg = ToFloat16(float32(180.0 / math.Pi)) // Radians to degrees
+	Deg2Rad = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(float32(math.Pi / 180.0)) // Degrees to radians
+	Rad2Deg = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(float32(180.0 / math.Pi)) // Radians to degrees
 )
 
 // Helper functions for slice operations with error handling
@@ -389,7 +393,7 @@ func ComputeSliceStats(s []Float16) SliceStats {
 	}
 
 	if stats.Length > 0 {
-		stats.Mean = Div(stats.Sum, FromInt(stats.Length))
+		stats.Mean = Div(stats.Sum, NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(stats.Length))
 	}
 
 	return stats
@@ -399,12 +403,14 @@ func ComputeSliceStats(s []Float16) SliceStats {
 
 // FastAdd performs addition optimized for speed (may sacrifice precision)
 func FastAdd(a, b Float16) Float16 {
-	return ToFloat16(a.ToFloat32() + b.ToFloat32())
+	converter := NewConverter(DefaultConversionMode, DefaultRoundingMode)
+	return converter.ToFloat16(a.ToFloat32() + b.ToFloat32())
 }
 
 // FastMul performs multiplication optimized for speed (may sacrifice precision)
 func FastMul(a, b Float16) Float16 {
-	return ToFloat16(a.ToFloat32() * b.ToFloat32())
+	converter := NewConverter(DefaultConversionMode, DefaultRoundingMode)
+	return converter.ToFloat16(a.ToFloat32() * b.ToFloat32())
 }
 
 // VectorAdd performs vectorized addition (placeholder for future SIMD implementation)

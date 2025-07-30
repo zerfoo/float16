@@ -1,13 +1,13 @@
 package float16
 
 import (
-	"math/bits"
+	"fmt"
 )
 
 // Global arithmetic settings
 var (
 	DefaultArithmeticMode = ModeIEEEArithmetic
-	DefaultRounding       = RoundNearestEven
+	DefaultRounding       = DefaultRoundingMode
 )
 
 // ArithmeticMode defines the precision/performance trade-off for arithmetic operations
@@ -331,121 +331,12 @@ func DivWithMode(a, b Float16, mode ArithmeticMode, rounding RoundingMode) (Floa
 
 // addIEEE754 implements full IEEE 754 addition
 func addIEEE754(a, b Float16, rounding RoundingMode) (Float16, error) {
-	// Extract components
-	signA, expA, mantA := a.extractComponents()
-	signB, expB, mantB := b.extractComponents()
-
-	// Ensure a has the larger magnitude for simpler logic
-	if expA < expB || (expA == expB && mantA < mantB) {
-		signA, expA, mantA, signB, expB, mantB = signB, expB, mantB, signA, expA, mantA
-	}
-
-	// Handle subnormal numbers by normalizing
-	if expA == 0 && mantA != 0 {
-		// Normalize a
-		shift := leadingZeros10(mantA)
-		mantA <<= (shift + 1)
-		mantA &= MantissaMask
-		expA = uint16(1 - shift)
-	} else if expA != 0 {
-		// Add implicit leading 1 for normal numbers
-		mantA |= (1 << MantissaLen)
-		expA = expA
-	}
-
-	if expB == 0 && mantB != 0 {
-		// Normalize b
-		shift := leadingZeros10(mantB)
-		mantB <<= (shift + 1)
-		mantB &= MantissaMask
-		expB = uint16(1 - shift)
-	} else if expB != 0 {
-		// Add implicit leading 1 for normal numbers
-		mantB |= (1 << MantissaLen)
-	}
-
-	// Align mantissas by shifting the smaller one
-	expDiff := int(expA) - int(expB)
-	if expDiff > 0 {
-		if expDiff >= 24 {
-			// b is too small to affect the result
-			return a, nil
-		}
-		mantB >>= expDiff
-	}
-
-	var resultSign uint16
-	var resultMant uint32
-	var resultExp int
-
-	if signA == signB {
-		// Same sign: add magnitudes
-		resultSign = signA
-		resultMant = uint32(mantA) + uint32(mantB)
-		resultExp = int(expA)
-	} else {
-		// Different signs: subtract magnitudes
-		if mantA >= mantB {
-			resultSign = signA
-			resultMant = uint32(mantA) - uint32(mantB)
-		} else {
-			resultSign = signB
-			resultMant = uint32(mantB) - uint32(mantA)
-		}
-		resultExp = int(expA)
-	}
-
-	// Handle zero result
-	if resultMant == 0 {
-		return PositiveZero, nil
-	}
-
-	// Normalize result
-	if resultMant >= (1 << (MantissaLen + 1)) {
-		// Overflow: shift right and increment exponent
-		resultMant >>= 1
-		resultExp++
-	} else {
-		// Find leading 1 and normalize
-		leadingZeros := 31 - bits.Len32(resultMant)
-		if leadingZeros > 0 {
-			shift := leadingZeros - (31 - MantissaLen - 1)
-			if shift > 0 {
-				resultMant <<= shift
-				resultExp -= shift
-			}
-		}
-	}
-
-	// Check for overflow
-	if resultExp >= ExponentInfinity {
-		if resultSign != 0 {
-			return NegativeInfinity, nil
-		}
-		return PositiveInfinity, nil
-	}
-
-	// Check for underflow
-	if resultExp <= 0 {
-		// Convert to subnormal or zero
-		shift := 1 - resultExp
-		if shift >= 24 {
-			// Underflow to zero
-			if resultSign != 0 {
-				return NegativeZero, nil
-			}
-			return PositiveZero, nil
-		}
-		resultMant >>= shift
-		resultExp = 0
-	}
-
-	// Remove implicit leading 1 for normal numbers
-	if resultExp > 0 {
-		resultMant &= MantissaMask
-	}
-
-	return packComponents(resultSign, uint16(resultExp), uint16(resultMant)), nil
+	// For addition, we can use the simpler approach of converting to float32
+	// since the intermediate precision is sufficient for exact float16 results
+	f32a := a.ToFloat32()
+	f32b := b.ToFloat32()
+	result := f32a + f32b
+	return ToFloat16WithMode(result, ModeIEEE, rounding)
 }
 
 // mulIEEE754 implements full IEEE 754 multiplication
@@ -542,7 +433,13 @@ func Min(a, b Float16) Float16 {
 	if b.IsNaN() {
 		return a
 	}
-
+	// Handle -0 and +0
+	if a.IsZero() && b.IsZero() {
+		if a.Signbit() {
+			return a // a is -0
+		}
+		return b // b is -0, or both are +0
+	}
 	if Less(a, b) {
 		return a
 	}
@@ -601,8 +498,12 @@ func MulSlice(a, b []Float16) []Float16 {
 
 	result := make([]Float16, len(a))
 	for i := range a {
-		result[i] = Mul(a[i], b[i])
+		product := Mul(a[i], b[i])
+		result[i] = product
+		// Debug print
+		fmt.Printf("MulSlice: a[%d]=%v (0x%04X), b[%d]=%v (0x%04X), product=%v (0x%04X)\n", i, a[i], uint16(a[i]), i, b[i], uint16(b[i]), product, uint16(product))
 	}
+	fmt.Printf("MulSlice: result=%v\n", result)
 	return result
 }
 
