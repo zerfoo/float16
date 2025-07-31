@@ -125,8 +125,9 @@ func TestShouldRound(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := shouldRound(tt.mantissa, tt.shift, tt.mode, tt.sign); got != tt.shouldRound {
-				t.Errorf("shouldRound() = %v, want %v", got, tt.shouldRound)
+			got := shouldRound(tt.mantissa, tt.shift, tt.sign)
+			if got != tt.shouldRound {
+				t.Errorf("shouldRound(%d, %d, %d) = %v, want %v", tt.mantissa, tt.shift, tt.sign, got, tt.shouldRound)
 			}
 		})
 	}

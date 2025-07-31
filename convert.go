@@ -25,10 +25,14 @@ func (c *Converter) ToFloat16(f32 float32) Float16 {
 	return Float16(float16.Fromfloat32(f32).Bits())
 }
 
+// ToFloat16 converts a float32 to Float16 with default conversion and rounding modes
+func ToFloat16(f32 float32) Float16 {
+	return NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(f32)
+}
+
 // ToFloat16WithMode converts a float32 to Float16 with specified conversion and rounding modes
 func (c *Converter) ToFloat16WithMode(f32 float32) (Float16, error) {
 	convMode := c.ConversionMode
-	roundMode := c.RoundingMode
 	if convMode == ModeStrict {
 		if math.IsInf(float64(f32), 0) {
 			return 0, &Float16Error{Code: ErrInfinity}
@@ -85,7 +89,7 @@ func FromFloat64WithMode(f64 float64, convMode ConversionMode, roundMode Roundin
 		}
 	}
 
-	return c.ToFloat16WithMode(float32(f64))
+	return NewConverter(convMode, roundMode).ToFloat16WithMode(float32(f64))
 }
 
 // ToSlice16 converts a slice of float32 to Float16 with optimized performance
@@ -98,6 +102,11 @@ func (c *Converter) ToSlice16(f32s []float32) []Float16 {
 		res[i] = c.ToFloat16(f)
 	}
 	return res
+}
+
+// ToSlice16 converts a slice of float32 to Float16 with default conversion and rounding modes
+func ToSlice16(f32s []float32) []Float16 {
+	return NewConverter(DefaultConversionMode, DefaultRoundingMode).ToSlice16(f32s)
 }
 
 // ToSlice32 converts a slice of Float16 to float32 with optimized performance
@@ -160,6 +169,11 @@ func (c *Converter) FromInt(i int) Float16 {
 	return c.ToFloat16(float32(i))
 }
 
+// FromInt converts an integer to Float16 with default conversion and rounding modes
+func FromInt(i int) Float16 {
+	return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(i)
+}
+
 // FromInt32 converts an int32 to Float16
 func (c *Converter) FromInt32(i int32) Float16 {
 	return c.ToFloat16(float32(i))
@@ -195,6 +209,11 @@ func (c *Converter) Parse(s string) (Float16, error) {
 		Code: ErrInvalidOperation,
 	}
 }
+
+// Parse converts a string to Float16 with default conversion and rounding modes
+func Parse(s string) (Float16, error) {
+	return NewConverter(DefaultConversionMode, DefaultRoundingMode).Parse(s)
+}
 func (c *Converter) shouldRound(mantissa uint32, shift int, sign uint16) bool {
 	switch c.RoundingMode {
 	case RoundNearestEven:
@@ -214,4 +233,8 @@ func (c *Converter) shouldRound(mantissa uint32, shift int, sign uint16) bool {
 		return sign != 0 && mantissa&((1<<uint(shift))-1) != 0
 	}
 	return false
+}
+
+func shouldRound(mantissa uint32, shift int, sign uint16) bool {
+	return NewConverter(DefaultConversionMode, DefaultRoundingMode).shouldRound(mantissa, shift, sign)
 }

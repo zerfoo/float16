@@ -52,6 +52,11 @@ const (
 	VersionPatch = 0
 )
 
+var (
+	DefaultConversionMode ConversionMode = ModeIEEE
+	DefaultRoundingMode   RoundingMode   = RoundNearestEven
+)
+
 // Package configuration
 type Config struct {
 	DefaultConversionMode ConversionMode

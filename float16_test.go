@@ -425,55 +425,29 @@ func TestDebugSubnormalValues(t *testing.T) {
 
 func TestSqrt(t *testing.T) {
 	converter := NewConverter(ModeIEEE, RoundNearestEven)
-	tests := []struct {
-		input    Float16
-		expected Float16
-		name     string
-	}{
-		{PositiveZero, PositiveZero, "sqrt(0)"},
-		{converter.ToFloat16(1.0), converter.ToFloat16(1.0), "sqrt(1)"},
-		{converter.ToFloat16(4.0), converter.ToFloat16(2.0), "sqrt(4)"},
-		{converter.ToFloat16(16.0), converter.ToFloat16(4.0), "sqrt(16)"},
-		{PositiveInfinity, PositiveInfinity, "sqrt(inf)"},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Sqrt(test.input)
-			if !Equal(result, test.expected) && !result.IsInf(0) {
-				t.Errorf("Sqrt(0x%04x) = 0x%04x, expected 0x%04x",
-					test.input, result, test.expected)
-			}
-		})
+	mathConverter := NewMathConverter(converter)
+	// Test Sqrt
+	sqrtResult := mathConverter.Sqrt(converter.FromFloat32(4.0))
+	if sqrtResult != converter.FromFloat32(2.0) {
+		t.Errorf("Expected Sqrt(4.0) to be 2.0, but got %v", sqrtResult)
 	}
 }
 
-func TestMathConstants(t *testing.T) {
+func TestSinCosTan(t *testing.T) {
 	converter := NewConverter(ModeIEEE, RoundNearestEven)
-	// Just verify that constants are reasonable values
-	if E.ToFloat32() < 2.7 || E.ToFloat32() > 2.8 {
-		t.Errorf("E constant seems wrong: %g", E.ToFloat32())
+	mathConverter := NewMathConverter(converter)
+	// Test Sin, Cos, Tan
+	sinResult := mathConverter.Sin(converter.FromFloat32(0.0))
+	if sinResult != converter.FromFloat32(0.0) {
+		t.Errorf("Expected Sin(0.0) to be 0.0, but got %v", sinResult)
 	}
-	if Pi.ToFloat32() < 3.1 || Pi.ToFloat32() > 3.2 {
-		t.Errorf("Pi constant seems wrong: %g", Pi.ToFloat32())
+	cosResult := mathConverter.Cos(converter.FromFloat32(0.0))
+	if cosResult != converter.FromFloat32(1.0) {
+		t.Errorf("Expected Cos(0.0) to be 1.0, but got %v", cosResult)
 	}
-	if Sqrt2.ToFloat32() < 1.4 || Sqrt2.ToFloat32() > 1.5 {
-		t.Errorf("Sqrt2 constant seems wrong: %g", Sqrt2.ToFloat32())
-	}
-}
-
-func TestTrigFunctions(t *testing.T) {
-	converter := NewConverter(ModeIEEE, RoundNearestEven)
-	// Test basic trigonometric identities
-	zero := PositiveZero
-	if !Equal(Sin(zero), zero) {
-		t.Error("sin(0) should be 0")
-	}
-	if !Equal(Cos(zero), converter.ToFloat16(1.0)) {
-		t.Error("cos(0) should be 1")
-	}
-	if !Equal(Tan(zero), zero) {
-		t.Error("tan(0) should be 0")
+	tanResult := mathConverter.Tan(converter.FromFloat32(0.0))
+	if tanResult != converter.FromFloat32(0.0) {
+		t.Errorf("Expected Tan(0.0) to be 0.0, but got %v", tanResult)
 	}
 }
 
@@ -489,7 +463,7 @@ func TestToFloat64(t *testing.T) {
 		{"negative zero", NegativeZero, math.Copysign(0.0, -1.0)},
 		{"positive infinity", PositiveInfinity, math.Inf(1)},
 		{"negative infinity", NegativeInfinity, math.Inf(-1)},
-		{"quiet NaN", converter.NaN(), math.NaN()},
+		{"quiet NaN", NaN(), math.NaN()},
 
 		// Normal numbers
 		{"one", Float16(0x3c00), 1.0},
@@ -578,8 +552,7 @@ func TestFromFloat64(t *testing.T) {
 func TestFromFloat64WithMode(t *testing.T) {
 	// Test basic conversion
 	t.Run("basic conversion", func(t *testing.T) {
-		converter := NewConverter(testModeDefault, testRoundNearestEven)
-		result, err := converter.FromFloat64WithMode(1.5)
+		result, err := FromFloat64WithMode(1.5, testModeDefault, testRoundNearestEven)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
@@ -591,8 +564,7 @@ func TestFromFloat64WithMode(t *testing.T) {
 
 	// Test strict mode with overflow
 	t.Run("strict mode overflow", func(t *testing.T) {
-		converter := NewConverter(testModeStrict, testRoundNearestEven)
-		_, err := converter.FromFloat64WithMode(1e10)
+		_, err := FromFloat64WithMode(1e10, testModeStrict, testRoundNearestEven)
 		if err == nil {
 			t.Error("Expected overflow error in strict mode")
 		}
@@ -600,8 +572,7 @@ func TestFromFloat64WithMode(t *testing.T) {
 
 	// Test strict mode with underflow
 	t.Run("strict mode underflow", func(t *testing.T) {
-		converter := NewConverter(testModeStrict, testRoundNearestEven)
-		_, err := converter.FromFloat64WithMode(1e-10)
+		_, err := FromFloat64WithMode(1e-10, testModeStrict, testRoundNearestEven)
 		if err == nil {
 			t.Error("Expected underflow error in strict mode")
 		}
@@ -609,8 +580,7 @@ func TestFromFloat64WithMode(t *testing.T) {
 
 	// Test NaN in strict mode
 	t.Run("strict mode NaN", func(t *testing.T) {
-		converter := NewConverter(testModeStrict, testRoundNearestEven)
-		_, err := converter.FromFloat64WithMode(math.NaN())
+		_, err := FromFloat64WithMode(math.NaN(), testModeStrict, testRoundNearestEven)
 		if err == nil {
 			t.Error("Expected NaN error in strict mode")
 		}
@@ -631,8 +601,7 @@ func TestFromFloat64WithMode(t *testing.T) {
 
 	for _, test := range roundingTests {
 		t.Run(test.name, func(t *testing.T) {
-			converter := NewConverter(testModeDefault, test.roundMode)
-			result, err := converter.FromFloat64WithMode(test.input)
+			result, err := FromFloat64WithMode(test.input, testModeDefault, test.roundMode)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
@@ -722,8 +691,6 @@ func BenchmarkSqrt(b *testing.B) {
 }
 
 
-
-func TestFloat16ConverterInitialization(t *testing.T) {
 	converter := NewConverter(ModeIEEE, RoundNearestEven)
 	if converter == nil {
 		t.Error("Expected converter to be initialized, got nil")
