@@ -157,7 +157,7 @@ func Zero() Float16 {
 // One returns a Float16 value representing 1.0
 func One() Float16 {
 	converter := NewConverter(DefaultConversionMode, DefaultRoundingMode)
-	return converter.ToFloat16(1.0)
+	return FromFloat32(1.0)
 }
 
 // NaN returns a Float16 quiet NaN value
@@ -337,7 +337,7 @@ var (
 	// Common fractional values
 	Half16    = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(0.5)
 	Quarter16 = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(0.25)
-	Third16   = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(1.0 / 3.0)
+	Third16   = FromFloat32(1.0 / 3.0)
 
 	// Special mathematical values
 	NaN16  = QuietNaN
@@ -345,8 +345,8 @@ var (
 	NegInf = NegativeInfinity
 
 	// Commonly used constants
-	Deg2Rad = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(float32(math.Pi / 180.0)) // Degrees to radians
-	Rad2Deg = NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(float32(180.0 / math.Pi)) // Radians to degrees
+	Deg2Rad = FromFloat32(float32(math.Pi / 180.0)) // Degrees to radians
+	Rad2Deg = FromFloat32(float32(180.0 / math.Pi)) // Radians to degrees
 )
 
 // Helper functions for slice operations with error handling

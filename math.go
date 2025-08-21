@@ -4,22 +4,10 @@ import (
 	"math"
 )
 
-// MathConverter holds a Converter instance for mathematical operations.
-type MathConverter struct {
-	*Converter
-}
-
-// NewMathConverter creates a new MathConverter with the given Converter.
-func NewMathConverter(conv *Converter) *MathConverter {
-	return &MathConverter{
-		Converter: conv,
-	}
-}
-
 // Mathematical functions for Float16
 
 // Sqrt returns the square root of the Float16 value
-func (m *MathConverter) Sqrt(f Float16) Float16 {
+func Sqrt(f Float16) Float16 {
 	// Handle special cases
 	if f.IsZero() {
 		return f // Preserve sign of zero
@@ -38,11 +26,11 @@ func (m *MathConverter) Sqrt(f Float16) Float16 {
 	// Use float32 for computation and convert back
 	f32 := f.ToFloat32()
 	result := float32(math.Sqrt(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Cbrt returns the cube root of the Float16 value
-func (m *MathConverter) Cbrt(f Float16) Float16 {
+func Cbrt(f Float16) Float16 {
 	switch f {
 	case 0x3C00: // 1.0
 		return 0x3C00 // 1.0
@@ -63,14 +51,14 @@ func (m *MathConverter) Cbrt(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Cbrt(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Pow returns f raised to the power of exp
-func (m *MathConverter) Pow(f, exp Float16) Float16 {
+func Pow(f, exp Float16) Float16 {
 	// Handle special cases according to IEEE 754
 	if exp.IsZero() {
-		return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(1)
+		return FromFloat32(1)
 	}
 	if f.IsZero() {
 		if exp.Signbit() {
@@ -91,13 +79,13 @@ func (m *MathConverter) Pow(f, exp Float16) Float16 {
 	f32 := f.ToFloat32()
 	exp32 := exp.ToFloat32()
 	result := float32(math.Pow(float64(f32), float64(exp32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Exp returns e^f
-func (m *MathConverter) Exp(f Float16) Float16 {
+func Exp(f Float16) Float16 {
 	if f.IsZero() {
-		return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(1)
+		return FromFloat32(1)
 	}
 	if f.IsNaN() {
 		return f
@@ -111,13 +99,13 @@ func (m *MathConverter) Exp(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Exp(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Exp2 returns 2^f
-func (m *MathConverter) Exp2(f Float16) Float16 {
+func Exp2(f Float16) Float16 {
 	if f.IsZero() {
-		return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(1)
+		return FromFloat32(1)
 	}
 	if f.IsNaN() {
 		return f
@@ -131,16 +119,16 @@ func (m *MathConverter) Exp2(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Exp2(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Exp10 returns 10^f
-func (m *MathConverter) Exp10(f Float16) Float16 {
-	return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(10)
+func Exp10(f Float16) Float16 {
+	return FromFloat32(10)
 }
 
 // Log returns the natural logarithm of f
-func (m *MathConverter) Log(f Float16) Float16 {
+func Log(f Float16) Float16 {
 	if f.IsZero() {
 		return NegativeInfinity
 	}
@@ -156,11 +144,11 @@ func (m *MathConverter) Log(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Log(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Log2 returns the base-2 logarithm of f
-func (m *MathConverter) Log2(f Float16) Float16 {
+func Log2(f Float16) Float16 {
 	if f.IsZero() {
 		return NegativeInfinity
 	}
@@ -176,11 +164,11 @@ func (m *MathConverter) Log2(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Log2(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Log10 returns the base-10 logarithm of f
-func (m *MathConverter) Log10(f Float16) Float16 {
+func Log10(f Float16) Float16 {
 	if f.IsZero() {
 		return NegativeInfinity
 	}
@@ -196,13 +184,13 @@ func (m *MathConverter) Log10(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Log10(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Trigonometric functions
 
 // Sin returns the sine of f (in radians)
-func (m *MathConverter) Sin(f Float16) Float16 {
+func Sin(f Float16) Float16 {
 	if f.IsZero() {
 		return f // Preserve sign of zero
 	}
@@ -212,13 +200,13 @@ func (m *MathConverter) Sin(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Sin(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Cos returns the cosine of f (in radians)
-func (m *MathConverter) Cos(f Float16) Float16 {
+func Cos(f Float16) Float16 {
 	if f.IsZero() {
-		return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(1)
+		return FromFloat32(1)
 	}
 	if f.IsNaN() || f.IsInf(0) {
 		return QuietNaN
@@ -226,11 +214,11 @@ func (m *MathConverter) Cos(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Cos(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Tan returns the tangent of f (in radians)
-func (m *MathConverter) Tan(f Float16) Float16 {
+func Tan(f Float16) Float16 {
 	if f.IsZero() {
 		return f // Preserve sign of zero
 	}
@@ -240,11 +228,11 @@ func (m *MathConverter) Tan(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Tan(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Asin returns the arcsine of f
-func (m *MathConverter) Asin(f Float16) Float16 {
+func Asin(f Float16) Float16 {
 	if f.IsZero() {
 		return f
 	}
@@ -259,11 +247,11 @@ func (m *MathConverter) Asin(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Asin(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Acos returns the arccosine of f
-func (m *MathConverter) Acos(f Float16) Float16 {
+func Acos(f Float16) Float16 {
 	if f.IsNaN() {
 		return f
 	}
@@ -275,11 +263,11 @@ func (m *MathConverter) Acos(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Acos(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Atan returns the arctangent of f
-func (m *MathConverter) Atan(f Float16) Float16 {
+func Atan(f Float16) Float16 {
 	if f.IsZero() {
 		return f
 	}
@@ -287,19 +275,19 @@ func (m *MathConverter) Atan(f Float16) Float16 {
 		return f
 	}
 	if f.IsInf(1) {
-		return Div(Pi, m.Converter.FromInt(2))
+		return Div(Pi, FromFloat32(2))
 	}
 	if f.IsInf(-1) {
-		return Div(Pi, m.Converter.FromInt(2)).Neg()
+		return Div(Pi, FromFloat32(2)).Neg()
 	}
 
 	f32 := f.ToFloat32()
 	result := float32(math.Atan(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Atan2 returns the arctangent of y/x
-func (m *MathConverter) Atan2(y, x Float16) Float16 {
+func Atan2(y, x Float16) Float16 {
 	if y.IsNaN() || x.IsNaN() {
 		return QuietNaN
 	}
@@ -307,13 +295,13 @@ func (m *MathConverter) Atan2(y, x Float16) Float16 {
 	y32 := y.ToFloat32()
 	x32 := x.ToFloat32()
 	result := float32(math.Atan2(float64(y32), float64(x32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Hyperbolic functions
 
 // Sinh returns the hyperbolic sine of f
-func (m *MathConverter) Sinh(f Float16) Float16 {
+func Sinh(f Float16) Float16 {
 	if f.IsZero() {
 		return f
 	}
@@ -326,13 +314,13 @@ func (m *MathConverter) Sinh(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Sinh(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Cosh returns the hyperbolic cosine of f
-func (m *MathConverter) Cosh(f Float16) Float16 {
+func Cosh(f Float16) Float16 {
 	if f.IsZero() {
-		return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(1)
+		return FromFloat32(1)
 	}
 	if f.IsNaN() {
 		return f
@@ -343,11 +331,11 @@ func (m *MathConverter) Cosh(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Cosh(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Tanh returns the hyperbolic tangent of f
-func (m *MathConverter) Tanh(f Float16) Float16 {
+func Tanh(f Float16) Float16 {
 	if f.IsZero() {
 		return f
 	}
@@ -355,76 +343,76 @@ func (m *MathConverter) Tanh(f Float16) Float16 {
 		return f
 	}
 	if f.IsInf(1) {
-		return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(1)
+		return FromFloat32(1)
 	}
 	if f.IsInf(-1) {
-		return m.Converter.FromInt(-1)
+		return FromFloat32(-1)
 	}
 
 	f32 := f.ToFloat32()
 	result := float32(math.Tanh(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Rounding and truncation functions
 
 // Floor returns the largest integer value less than or equal to f
-func (m *MathConverter) Floor(f Float16) Float16 {
+func Floor(f Float16) Float16 {
 	if f.IsZero() || f.IsNaN() || f.IsInf(0) {
 		return f
 	}
 
 	f32 := f.ToFloat32()
 	result := float32(math.Floor(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Ceil returns the smallest integer value greater than or equal to f
-func (m *MathConverter) Ceil(f Float16) Float16 {
+func Ceil(f Float16) Float16 {
 	if f.IsZero() || f.IsNaN() || f.IsInf(0) {
 		return f
 	}
 
 	f32 := f.ToFloat32()
 	result := float32(math.Ceil(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Round returns the nearest integer value to f
-func (m *MathConverter) Round(f Float16) Float16 {
+func Round(f Float16) Float16 {
 	if f.IsZero() || f.IsNaN() || f.IsInf(0) {
 		return f
 	}
 
 	f32 := f.ToFloat32()
 	result := float32(math.Round(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // RoundToEven returns the nearest integer value to f, rounding ties to even
-func (m *MathConverter) RoundToEven(f Float16) Float16 {
+func RoundToEven(f Float16) Float16 {
 	if f.IsZero() || f.IsNaN() || f.IsInf(0) {
 		return f
 	}
 
 	f32 := f.ToFloat32()
 	result := float32(math.RoundToEven(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Trunc returns the integer part of f (truncated towards zero)
-func (m *MathConverter) Trunc(f Float16) Float16 {
+func Trunc(f Float16) Float16 {
 	if f.IsZero() || f.IsNaN() || f.IsInf(0) {
 		return f
 	}
 
 	f32 := f.ToFloat32()
 	result := float32(math.Trunc(float64(f32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Mod returns the floating-point remainder of f/divisor
-func (m *MathConverter) Mod(f, divisor Float16) Float16 {
+func Mod(f, divisor Float16) Float16 {
 	if divisor.IsZero() {
 		return QuietNaN
 	}
@@ -441,11 +429,11 @@ func (m *MathConverter) Mod(f, divisor Float16) Float16 {
 	f32 := f.ToFloat32()
 	div32 := divisor.ToFloat32()
 	result := float32(math.Mod(float64(f32), float64(div32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Remainder returns the IEEE 754 floating-point remainder of f/divisor
-func (m *MathConverter) Remainder(f, divisor Float16) Float16 {
+func Remainder(f, divisor Float16) Float16 {
 	if divisor.IsZero() {
 		return QuietNaN
 	}
@@ -465,22 +453,22 @@ func (m *MathConverter) Remainder(f, divisor Float16) Float16 {
 	f32 := f.ToFloat32()
 	div32 := divisor.ToFloat32()
 	result := float32(math.Remainder(float64(f32), float64(div32)))
-	return m.Converter.ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Mathematical constants as Float16 values
 var (
-	E       = NewMathConverter(NewConverter(DefaultConversionMode, DefaultRoundingMode)).ToFloat16(float32(math.E))       // Euler's number
-	Pi      = NewMathConverter(NewConverter(DefaultConversionMode, DefaultRoundingMode)).ToFloat16(float32(math.Pi))      // Pi
-	Phi     = NewMathConverter(NewConverter(DefaultConversionMode, DefaultRoundingMode)).ToFloat16(float32(math.Phi))     // Golden ratio
-	Sqrt2   = NewMathConverter(NewConverter(DefaultConversionMode, DefaultRoundingMode)).ToFloat16(float32(math.Sqrt2))   // Square root of 2
-	SqrtE   = NewMathConverter(NewConverter(DefaultConversionMode, DefaultRoundingMode)).ToFloat16(float32(math.SqrtE))   // Square root of E
-	SqrtPi  = NewMathConverter(NewConverter(DefaultConversionMode, DefaultRoundingMode)).ToFloat16(float32(math.SqrtPi))  // Square root of Pi
-	SqrtPhi = NewMathConverter(NewConverter(DefaultConversionMode, DefaultRoundingMode)).ToFloat16(float32(math.SqrtPhi)) // Square root of Phi
-	Ln2     = NewMathConverter(NewConverter(DefaultConversionMode, DefaultRoundingMode)).ToFloat16(float32(math.Ln2))     // Natural logarithm of 2
-	Log2E   = NewMathConverter(NewConverter(DefaultConversionMode, DefaultRoundingMode)).ToFloat16(float32(math.Log2E))   // Base-2 logarithm of E
-	Ln10    = NewMathConverter(NewConverter(DefaultConversionMode, DefaultRoundingMode)).ToFloat16(float32(math.Ln10))    // Natural logarithm of 10
-	Log10E  = NewMathConverter(NewConverter(DefaultConversionMode, DefaultRoundingMode)).ToFloat16(float32(math.Log10E))  // Base-10 logarithm of E
+		E       = FromFloat32(float32(math.E))       // Euler's number
+	Pi      = FromFloat32(float32(math.Pi))      // Pi
+	Phi     = FromFloat32(float32(math.Phi))     // Golden ratio
+	Sqrt2   = FromFloat32(float32(math.Sqrt2))   // Square root of 2
+	SqrtE   = FromFloat32(float32(math.SqrtE))   // Square root of E
+	SqrtPi  = FromFloat32(float32(math.SqrtPi))  // Square root of Pi
+	SqrtPhi = FromFloat32(float32(math.SqrtPhi)) // Square root of Phi
+	Ln2     = FromFloat32(float32(math.Ln2))     // Natural logarithm of 2
+	Log2E   = FromFloat32(float32(math.Log2E))   // Base-2 logarithm of E
+	Ln10    = FromFloat32(float32(math.Ln10))    // Natural logarithm of 10
+	Log10E  = FromFloat32(float32(math.Log10E))  // Base-10 logarithm of E
 )
 
 // Utility functions
@@ -510,7 +498,7 @@ func Lerp(a, b, t Float16) Float16 {
 	if t.IsZero() {
 		return a
 	}
-	if Equal(t, NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(1)) {
+	if Equal(t, FromFloat32(1)) {
 		return b
 	}
 
@@ -520,7 +508,7 @@ func Lerp(a, b, t Float16) Float16 {
 }
 
 // Sign returns -1, 0, or 1 depending on the sign of f
-func (m *MathConverter) Sign(f Float16) Float16 {
+func Sign(f Float16) Float16 {
 	if f.IsNaN() {
 		return f
 	}
@@ -528,9 +516,9 @@ func (m *MathConverter) Sign(f Float16) Float16 {
 		return PositiveZero
 	}
 	if f.Signbit() {
-		return m.Converter.FromInt(-1)
+		return FromFloat32(-1)
 	}
-	return m.Converter.FromInt(1)
+	return FromFloat32(1)
 }
 
 // CopySign returns a Float16 with the magnitude of f and the sign of sign
@@ -559,7 +547,7 @@ func Hypot(f, g Float16) Float16 {
 	f32 := f.ToFloat32()
 	g32 := g.ToFloat32()
 	result := float32(math.Hypot(float64(f32), float64(g32)))
-	return NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Gamma returns the Gamma function of f
@@ -576,7 +564,7 @@ func Gamma(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Gamma(float64(f32)))
-	return NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Lgamma returns the natural logarithm and sign of Gamma(f)
@@ -587,7 +575,7 @@ func Lgamma(f Float16) (Float16, int) {
 
 	f32 := f.ToFloat32()
 	lgamma, sign := math.Lgamma(float64(f32))
-	return NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(float32(lgamma)), sign
+	return FromFloat32(float32(lgamma)), sign
 }
 
 // J0 returns the order-zero Bessel function of the first kind
@@ -601,7 +589,7 @@ func J0(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.J0(float64(f32)))
-	return NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // J1 returns the order-one Bessel function of the first kind
@@ -615,7 +603,7 @@ func J1(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.J1(float64(f32)))
-	return NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Y0 returns the order-zero Bessel function of the second kind
@@ -632,7 +620,7 @@ func Y0(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Y0(float64(f32)))
-	return NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Y1 returns the order-one Bessel function of the second kind
@@ -649,7 +637,7 @@ func Y1(f Float16) Float16 {
 
 	f32 := f.ToFloat32()
 	result := float32(math.Y1(float64(f32)))
-	return NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Erf returns the error function of f
@@ -661,15 +649,15 @@ func Erf(f Float16) Float16 {
 		return f
 	}
 	if f.IsInf(1) {
-		return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(1)
+		return FromFloat32(1)
 	}
 	if f.IsInf(-1) {
-		return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(-1)
+		return FromFloat32(-1)
 	}
 
 	f32 := f.ToFloat32()
 	result := float32(math.Erf(float64(f32)))
-	return NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(result)
+	return FromFloat32(result)
 }
 
 // Erfc returns the complementary error function of f
@@ -681,10 +669,10 @@ func Erfc(f Float16) Float16 {
 		return PositiveZero
 	}
 	if f.IsInf(-1) {
-		return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromInt(2)
+		return FromFloat32(2)
 	}
 
 	f32 := f.ToFloat32()
 	result := float32(math.Erfc(float64(f32)))
-	return NewConverter(DefaultConversionMode, DefaultRoundingMode).ToFloat16(result)
+	return FromFloat32(result)
 }
