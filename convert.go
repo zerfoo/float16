@@ -1,7 +1,6 @@
 package float16
 
 import (
-	"fmt"
 	"math"
 	"strconv"
 )
@@ -127,15 +126,7 @@ func (f Float16) ToFloat64() float64 {
 	return float64(f.ToFloat32()) // Simplified: convert via float32
 }
 
-// FromBits creates a Float16 from its raw uint16 bit representation.
-func FromBits(bits uint16) Float16 {
-	return Float16(bits)
-}
 
-// Bits returns the raw uint16 bit representation of a Float16.
-func (f Float16) Bits() uint16 {
-	return uint16(f)
-}
 
 // ParseFloat converts a string to a Float16 value.
 // The precision parameter is ignored for Float16.

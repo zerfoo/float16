@@ -89,7 +89,7 @@ func AddWithMode(a, b Float16, mode ArithmeticMode, rounding RoundingMode) (Floa
 		f32a := a.ToFloat32()
 		f32b := b.ToFloat32()
 		result := f32a + f32b
-		return NewConverter(ModeIEEE, rounding).ToFloat16(result), nil
+		return FromFloat32(result), nil
 	}
 
 	// Full IEEE 754 implementation for exact mode
@@ -183,7 +183,7 @@ func MulWithMode(a, b Float16, mode ArithmeticMode, rounding RoundingMode) (Floa
 		f32a := a.ToFloat32()
 		f32b := b.ToFloat32()
 		result := f32a * f32b
-		return NewConverter(ModeIEEE, rounding).ToFloat16(result), nil
+		return FromFloat32(result), nil
 	}
 
 	// Full IEEE 754 implementation
@@ -321,7 +321,7 @@ func DivWithMode(a, b Float16, mode ArithmeticMode, rounding RoundingMode) (Floa
 		f32a := a.ToFloat32()
 		f32b := b.ToFloat32()
 		result := f32a / f32b
-		return NewConverter(ModeIEEE, rounding).ToFloat16(result), nil
+		return FromFloat32(result), nil
 	}
 
 	// Full IEEE 754 implementation
@@ -337,7 +337,7 @@ func addIEEE754(a, b Float16, rounding RoundingMode) (Float16, error) {
 	f32a := a.ToFloat32()
 	f32b := b.ToFloat32()
 	result := f32a + f32b
-	return NewConverter(ModeIEEE, rounding).ToFloat16WithMode(result)
+	return FromFloat32(result), nil
 }
 
 // mulIEEE754 implements full IEEE 754 multiplication
@@ -347,7 +347,7 @@ func mulIEEE754(a, b Float16, rounding RoundingMode) (Float16, error) {
 	f32a := a.ToFloat32()
 	f32b := b.ToFloat32()
 	result := f32a * f32b
-	return NewConverter(ModeIEEE, rounding).ToFloat16WithMode(result)
+	return FromFloat32(result), nil
 }
 
 // divIEEE754 implements full IEEE 754 division
@@ -359,7 +359,7 @@ func divIEEE754(a, b Float16, rounding RoundingMode) (Float16, error) {
 	result := f32a / f32b
 
 	// Use the provided rounding mode for the conversion back to Float16
-	return NewConverter(ModeExact, rounding).ToFloat16WithMode(result)
+	return FromFloat32(result), nil
 }
 
 // Comparison operations
@@ -560,5 +560,5 @@ func Norm2(s []Float16) Float16 {
 		square := Mul(v, v)
 		sumSquares = Add(sumSquares, square)
 	}
-	return NewConverter(DefaultConversionMode, DefaultRoundingMode).FromFloat64(math.Sqrt(sumSquares.ToFloat64()))
+	return FromFloat64(math.Sqrt(sumSquares.ToFloat64()))
 }
