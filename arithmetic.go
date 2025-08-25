@@ -1,7 +1,6 @@
 package float16
 
 import (
-	"fmt"
 	"math"
 )
 
@@ -187,7 +186,7 @@ func MulWithMode(a, b Float16, mode ArithmeticMode, rounding RoundingMode) (Floa
 	}
 
 	// Full IEEE 754 implementation
-	return addIEEE754(a, b, rounding)
+	return mulIEEE754(a, b, rounding)
 }
 
 // Div performs division of two Float16 values
@@ -325,7 +324,7 @@ func DivWithMode(a, b Float16, mode ArithmeticMode, rounding RoundingMode) (Floa
 	}
 
 	// Full IEEE 754 implementation
-	return addIEEE754(a, b, rounding)
+	return divIEEE754(a, b, rounding)
 }
 
 // IEEE 754 compliant arithmetic implementations
@@ -337,7 +336,7 @@ func addIEEE754(a, b Float16, rounding RoundingMode) (Float16, error) {
 	f32a := a.ToFloat32()
 	f32b := b.ToFloat32()
 	result := f32a + f32b
-	return FromFloat32(result), nil
+	return FromFloat32WithRounding(result, rounding), nil
 }
 
 // mulIEEE754 implements full IEEE 754 multiplication
@@ -347,7 +346,7 @@ func mulIEEE754(a, b Float16, rounding RoundingMode) (Float16, error) {
 	f32a := a.ToFloat32()
 	f32b := b.ToFloat32()
 	result := f32a * f32b
-	return FromFloat32(result), nil
+	return FromFloat32WithRounding(result, rounding), nil
 }
 
 // divIEEE754 implements full IEEE 754 division
@@ -357,9 +356,7 @@ func divIEEE754(a, b Float16, rounding RoundingMode) (Float16, error) {
 	f32a := a.ToFloat32()
 	f32b := b.ToFloat32()
 	result := f32a / f32b
-
-	// Use the provided rounding mode for the conversion back to Float16
-	return FromFloat32(result), nil
+	return FromFloat32WithRounding(result, rounding), nil
 }
 
 // Comparison operations
@@ -499,12 +496,8 @@ func MulSlice(a, b []Float16) []Float16 {
 
 	result := make([]Float16, len(a))
 	for i := range a {
-		product := Mul(a[i], b[i])
-		result[i] = product
-		// Debug print
-		fmt.Printf("MulSlice: a[%d]=%v (0x%04X), b[%d]=%v (0x%04X), product=%v (0x%04X)\n", i, a[i], uint16(a[i]), i, b[i], uint16(b[i]), product, uint16(product))
+		result[i] = Mul(a[i], b[i])
 	}
-	fmt.Printf("MulSlice: result=%v\n", result)
 	return result
 }
 
