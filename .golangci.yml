@@ -1,0 +1,30 @@
+run:
+  timeout: 5m
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  gofmt:
+    simplify: true
+  govet:
+    enable-all: true
+  misspell:
+    locale: US
+
+linters:
+  enable:
+    - gofmt
+    - goimports  
+    - govet
+    - ineffassign
+    - misspell
+    - goconst
+    - gocyclo
+    - staticcheck
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
