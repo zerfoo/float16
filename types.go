@@ -2,11 +2,71 @@ package float16
 
 import (
 	"fmt"
-	"math/bits"
+)
+
+// ErrorCode represents specific error categories for float16 operations
+type ErrorCode int
+
+const (
+	ErrInvalidOperation ErrorCode = iota
+	ErrNaN
+	ErrInfinity
+	ErrOverflow
+	ErrUnderflow
+	ErrDivisionByZero
+)
+
+// Float16Error provides detailed error information for float16 operations
+type Float16Error struct {
+	Op   string
+	Msg  string
+	Code ErrorCode
+}
+
+func (e *Float16Error) Error() string {
+	if e == nil {
+		return "<nil>"
+	}
+	if e.Op != "" {
+		return fmt.Sprintf("float16 %s: %s", e.Op, e.Msg)
+	}
+	return "float16: " + e.Msg
+}
+
+// RoundingMode controls how results are rounded during conversion/arithmetic
+type RoundingMode int
+
+const (
+	// Round to nearest, ties to even
+	RoundNearestEven RoundingMode = iota
+	// Round toward zero (truncate)
+	RoundTowardZero
+	// Round toward +Inf
+	RoundTowardPositive
+	// Round toward -Inf
+	RoundTowardNegative
+	// Round to nearest, ties away from zero
+	RoundNearestAway
+)
+
+// ConversionMode controls error reporting behavior for conversions
+type ConversionMode int
+
+const (
+	// ModeIEEE performs IEEE-style conversion, saturating to Inf/0 with no errors
+	ModeIEEE ConversionMode = iota
+	// ModeStrict reports errors for NaN, Inf, overflow, and underflow
+	ModeStrict
 )
 
 // Float16 represents a 16-bit IEEE 754 half-precision floating-point value
 type Float16 uint16
+
+// Bits returns the IEEE 754 half-precision bit pattern of f
+func (f Float16) Bits() uint16 { return uint16(f) }
+
+// FromBits constructs a Float16 from its IEEE 754 half-precision bit pattern
+func FromBits(b uint16) Float16 { return Float16(b) }
 
 // IEEE 754 half-precision format constants
 const (
@@ -30,10 +90,6 @@ const (
 	Float32ExponentBias = 127 // IEEE 754 single precision bias
 	Float32ExponentLen  = 8   // Float32 exponent bits
 	Float32MantissaLen  = 23  // Float32 mantissa bits
-
-	// Float64 constants for conversion
-	Float64ExponentBias = 1023 // IEEE 754 double precision bias
-	Float64MantissaLen  = 52   // Float64 mantissa bits
 
 	// Special exponent values
 	ExponentZero     = 0  // Zero and subnormal numbers
@@ -64,73 +120,6 @@ const (
 	QuietNaN     Float16 = 0x7E00 // Quiet NaN (most significant mantissa bit set)
 	SignalingNaN Float16 = 0x7D00 // Signaling NaN
 	NegativeQNaN Float16 = 0xFE00 // Negative quiet NaN
-)
-
-// ConversionMode defines how conversions handle edge cases
-type ConversionMode int
-
-const (
-	// ModeIEEE uses standard IEEE 754 rounding and special value behavior
-	ModeIEEE ConversionMode = iota
-	// ModeStrict returns errors for overflow, underflow, and NaN
-	ModeStrict
-	// ModeFast optimizes for performance, may sacrifice some precision
-	ModeFast
-	// ModeExact preserves exact values when possible, errors on precision loss
-	ModeExact
-)
-
-// RoundingMode defines IEEE 754 rounding behavior
-type RoundingMode int
-
-const (
-	// RoundNearestEven rounds to nearest, ties to even (IEEE default)
-	RoundNearestEven RoundingMode = iota
-	// RoundNearestAway rounds to nearest, ties away from zero
-	RoundNearestAway
-	// RoundTowardZero truncates toward zero
-	RoundTowardZero
-	// RoundTowardPositive rounds toward +∞
-	RoundTowardPositive
-	// RoundTowardNegative rounds toward -∞
-	RoundTowardNegative
-)
-
-// Float16Error represents errors that can occur during Float16 operations
-type Float16Error struct {
-	Op    string      // Operation that caused the error
-	Value interface{} // Input value that caused the error
-	Msg   string      // Error message
-	Code  ErrorCode   // Specific error code
-}
-
-// ErrorCode represents specific error types
-type ErrorCode int
-
-const (
-	ErrOverflow ErrorCode = iota
-	ErrUnderflow
-	ErrInvalidOperation
-	ErrDivisionByZero
-	ErrInexact
-	ErrNaN
-	ErrInfinity
-)
-
-func (e *Float16Error) Error() string {
-	if e.Value != nil {
-		return fmt.Sprintf("float16.%s: %s (value: %v)", e.Op, e.Msg, e.Value)
-	}
-	return fmt.Sprintf("float16.%s: %s", e.Op, e.Msg)
-}
-
-// Predefined error instances
-var (
-	ErrOverflowError  = &Float16Error{Code: ErrOverflow, Msg: "value too large for float16"}
-	ErrUnderflowError = &Float16Error{Code: ErrUnderflow, Msg: "value too small for float16"}
-	ErrNaNError       = &Float16Error{Code: ErrNaN, Msg: "NaN in strict mode"}
-	ErrInfinityError  = &Float16Error{Code: ErrInfinity, Msg: "infinity in strict mode"}
-	ErrDivByZeroError = &Float16Error{Code: ErrDivisionByZero, Msg: "division by zero"}
 )
 
 // IsZero returns true if the Float16 value represents zero (positive or negative)
@@ -178,6 +167,61 @@ func (f Float16) IsSubnormal() bool {
 	return exp == ExponentZero && mant != 0
 }
 
+// FloatClass enumerates the IEEE 754 classification of a Float16 value
+type FloatClass int
+
+const (
+	ClassPositiveZero FloatClass = iota
+	ClassNegativeZero
+	ClassPositiveSubnormal
+	ClassNegativeSubnormal
+	ClassPositiveNormal
+	ClassNegativeNormal
+	ClassPositiveInfinity
+	ClassNegativeInfinity
+	ClassQuietNaN
+	ClassSignalingNaN
+)
+
+// Class returns the IEEE 754 classification of the value
+func (f Float16) Class() FloatClass {
+	bits := uint16(f)
+	sign := (bits & SignMask) != 0
+	exp := (bits & ExponentMask) >> MantissaLen
+	mant := bits & MantissaMask
+
+	switch exp {
+	case ExponentZero:
+		if mant == 0 {
+			if sign {
+				return ClassNegativeZero
+			}
+			return ClassPositiveZero
+		}
+		if sign {
+			return ClassNegativeSubnormal
+		}
+		return ClassPositiveSubnormal
+	case ExponentInfinity:
+		if mant == 0 {
+			if sign {
+				return ClassNegativeInfinity
+			}
+			return ClassPositiveInfinity
+		}
+		// NaN: distinguish quiet vs signaling by top mantissa bit (bit 9)
+		if (mant & (1 << (MantissaLen - 1))) != 0 {
+			return ClassQuietNaN
+		}
+		return ClassSignalingNaN
+	default:
+		if sign {
+			return ClassNegativeNormal
+		}
+		return ClassPositiveNormal
+	}
+}
+
 // Sign returns the sign of the Float16 value: 1 for positive, -1 for negative, 0 for zero
 func (f Float16) Sign() int {
 	if f.IsZero() {
@@ -204,19 +248,15 @@ func (f Float16) Neg() Float16 {
 	return f ^ SignMask // Flip sign bit
 }
 
-// CopySign returns a Float16 with the magnitude of f and the sign of sign
-func (f Float16) CopySign(sign Float16) Float16 {
-	return (f & 0x7FFF) | (sign & SignMask)
+// CopySign returns a value with the magnitude of f and the sign of s
+func (f Float16) CopySign(s Float16) Float16 {
+	// Clear sign bit of f, then OR with sign bit of s
+	return (f & ^Float16(SignMask)) | (s & Float16(SignMask))
 }
 
-// Bits returns the underlying uint16 representation
-func (f Float16) Bits() uint16 {
-	return uint16(f)
-}
-
-// FromBits creates a Float16 from its bit representation
-func FromBits(bits uint16) Float16 {
-	return Float16(bits)
+// ToInt converts Float16 to int (truncates toward zero)
+func (f Float16) ToInt() int {
+	return int(f.ToFloat32())
 }
 
 // String returns a string representation of the Float16 value
@@ -240,83 +280,11 @@ func (f Float16) String() string {
 func (f Float16) GoString() string {
 	return fmt.Sprintf("float16.FromBits(0x%04x)", uint16(f))
 }
-
-// Class returns the IEEE 754 class of the floating-point value
-type FloatClass int
-
-const (
-	ClassSignalingNaN FloatClass = iota
-	ClassQuietNaN
-	ClassNegativeInfinity
-	ClassNegativeNormal
-	ClassNegativeSubnormal
-	ClassNegativeZero
-	ClassPositiveZero
-	ClassPositiveSubnormal
-	ClassPositiveNormal
-	ClassPositiveInfinity
-)
-
-// Class returns the IEEE 754 classification of the Float16 value
-func (f Float16) Class() FloatClass {
-	if f.IsNaN() {
-		// Check if it's a signaling NaN (MSB of mantissa is 0)
-		if (f & 0x0200) == 0 {
-			return ClassSignalingNaN
-		}
-		return ClassQuietNaN
-	}
-
-	sign := f.Signbit()
-
-	if f.IsInf(0) {
-		if sign {
-			return ClassNegativeInfinity
-		}
-		return ClassPositiveInfinity
-	}
-
-	if f.IsZero() {
-		if sign {
-			return ClassNegativeZero
-		}
-		return ClassPositiveZero
-	}
-
-	if f.IsSubnormal() {
-		if sign {
-			return ClassNegativeSubnormal
-		}
-		return ClassPositiveSubnormal
-	}
-
-	// Normal number
-	if sign {
-		return ClassNegativeNormal
-	}
-	return ClassPositiveNormal
+func (f Float16) ToInt32() int32 {
+	return int32(f.ToFloat32())
 }
 
-// Utility functions for bit manipulation
-
-// extractComponents extracts sign, exponent, and mantissa from Float16
-func (f Float16) extractComponents() (sign uint16, exp uint16, mant uint16) {
-	bits := uint16(f)
-	sign = (bits & SignMask) >> 15
-	exp = (bits & ExponentMask) >> MantissaLen
-	mant = bits & MantissaMask
-	return
-}
-
-// packComponents packs sign, exponent, and mantissa into Float16
-func packComponents(sign, exp, mant uint16) Float16 {
-	return Float16((sign << 15) | (exp << MantissaLen) | (mant & MantissaMask))
-}
-
-// leadingZeros counts leading zeros in a 10-bit mantissa
-func leadingZeros10(x uint16) int {
-	if x == 0 {
-		return 10
-	}
-	return bits.LeadingZeros16(x<<6) - 6 // Shift to align with 16-bit and adjust
+// ToInt64 converts Float16 to int64 (truncates toward zero)
+func (f Float16) ToInt64() int64 {
+	return int64(f.ToFloat32())
 }
