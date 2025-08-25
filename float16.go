@@ -1,6 +1,8 @@
-// Package float16 implements the 16-bit floating point data type (IEEE 754-2008).
+// Package float16 implements both 16-bit floating point data types:
+// - Float16: IEEE 754-2008 half-precision (1 sign, 5 exponent, 10 mantissa bits)
+// - BFloat16: "Brain Floating Point" format (1 sign, 8 exponent, 7 mantissa bits)
 //
-// This implementation provides conversion between float16 and other floating-point types
+// This implementation provides conversion between both types and other floating-point types
 // (float32 and float64) with support for various rounding modes and error handling.
 //
 // # Special Values

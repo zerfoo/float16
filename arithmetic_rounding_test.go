@@ -18,10 +18,10 @@ func modes() []RoundingMode {
 
 func TestAddWithMode_RoundingMatchesConverter(t *testing.T) {
 	cases := [][2]float32{
-		{1.0, float32(math.Pow(2, -11))},     // halfway between 1.0 and next
-		{1.0, 1e-3},                          // general positive
-		{-1.0, float32(math.Pow(2, -11))},    // negative with halfway increment
-		{-0.75, 0.125},                       // mixed signs, exact binary fractions
+		{1.0, float32(math.Pow(2, -11))},  // halfway between 1.0 and next
+		{1.0, 1e-3},                       // general positive
+		{-1.0, float32(math.Pow(2, -11))}, // negative with halfway increment
+		{-0.75, 0.125},                    // mixed signs, exact binary fractions
 	}
 
 	for _, c := range cases {
@@ -47,10 +47,10 @@ func TestAddWithMode_RoundingMatchesConverter(t *testing.T) {
 
 func TestMulWithMode_RoundingMatchesConverter(t *testing.T) {
 	cases := [][2]float32{
-		{1.25, 0.2},          // positive * positive
-		{-1.25, 0.2},         // negative * positive
-		{1.5, -0.75},         // positive * negative
-		{-0.5, -0.125},       // negative * negative
+		{1.25, 0.2},    // positive * positive
+		{-1.25, 0.2},   // negative * positive
+		{1.5, -0.75},   // positive * negative
+		{-0.5, -0.125}, // negative * negative
 		{float32(math.Pow(2, -3)), float32(math.Pow(2, -8))}, // exact powers of two
 	}
 
@@ -77,11 +77,11 @@ func TestMulWithMode_RoundingMatchesConverter(t *testing.T) {
 
 func TestDivWithMode_RoundingMatchesConverter(t *testing.T) {
 	cases := [][2]float32{
-		{1.25, 0.2},          // positive / positive
-		{-1.25, 0.2},         // negative / positive
-		{1.5, -0.75},         // positive / negative
-		{-0.5, -0.125},       // negative / negative
-		{7.0, 3.0},           // non-terminating in binary
+		{1.25, 0.2},    // positive / positive
+		{-1.25, 0.2},   // negative / positive
+		{1.5, -0.75},   // positive / negative
+		{-0.5, -0.125}, // negative / negative
+		{7.0, 3.0},     // non-terminating in binary
 	}
 
 	for _, c := range cases {
