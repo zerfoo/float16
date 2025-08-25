@@ -86,10 +86,10 @@ func BFloat16FromFloat32WithRounding(f float32, mode RoundingMode) BFloat16 {
 
 	// Extract the high 16 bits (sign, exponent, and 7 MSBs of mantissa)
 	bfloat16Bits := bits >> 16
-	
+
 	// Check the bit at position 15 of the original float32 bits (the first bit to be truncated)
 	roundBit := (bits >> 15) & 0x1
-	
+
 	// Check if any of the bits from position 0 to 14 are non-zero
 	stickyBits := bits & 0x7FFF
 
@@ -133,7 +133,6 @@ func BFloat16FromFloat32WithRounding(f float32, mode RoundingMode) BFloat16 {
 	return BFloat16(bfloat16Bits)
 }
 
-
 // ToFloat32 converts BFloat16 to float32
 func (b BFloat16) ToFloat32() float32 {
 	// Expand back to 32 bits by shifting left 16 positions
@@ -151,7 +150,6 @@ func BFloat16FromFloat64(f float64) BFloat16 {
 func BFloat16FromFloat64WithRounding(f float64, mode RoundingMode) BFloat16 {
 	return BFloat16FromFloat32WithRounding(float32(f), mode)
 }
-
 
 // BFloat16FromFloat32WithMode converts a float32 to BFloat16 with specified conversion and rounding modes.
 func BFloat16FromFloat32WithMode(f32 float32, convMode ConversionMode, roundMode RoundingMode) (BFloat16, error) {

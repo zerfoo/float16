@@ -11,7 +11,7 @@ func TestAsin(t *testing.T) {
 		want Float16
 	}{
 		{"Asin(0)", PositiveZero, PositiveZero},
-		{"Asin(1)", FromFloat32(1.0), FromBits(0x3E48)}, // Approx. Pi/2
+		{"Asin(1)", FromFloat32(1.0), FromBits(0x3E48)},   // Approx. Pi/2
 		{"Asin(-1)", FromFloat32(-1.0), FromBits(0xBE48)}, // Approx. -Pi/2
 		{"Asin(NaN)", QuietNaN, QuietNaN},
 		{"Asin(2)", FromFloat32(2.0), QuietNaN},
@@ -55,7 +55,7 @@ func TestAtan(t *testing.T) {
 		want Float16
 	}{
 		{"Atan(0)", PositiveZero, PositiveZero},
-		{"Atan(inf)", PositiveInfinity, FromBits(0x3E48)}, // Approx. Pi/2
+		{"Atan(inf)", PositiveInfinity, FromBits(0x3E48)},  // Approx. Pi/2
 		{"Atan(-inf)", NegativeInfinity, FromBits(0xBE48)}, // Approx. -Pi/2
 		{"Atan(NaN)", QuietNaN, QuietNaN},
 	}

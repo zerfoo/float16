@@ -458,7 +458,7 @@ func Remainder(f, divisor Float16) Float16 {
 
 // Mathematical constants as Float16 values
 var (
-		E       = FromFloat32(float32(math.E))       // Euler's number
+	E       = FromFloat32(float32(math.E))       // Euler's number
 	Pi      = FromFloat32(float32(math.Pi))      // Pi
 	Phi     = FromFloat32(float32(math.Phi))     // Golden ratio
 	Sqrt2   = FromFloat32(float32(math.Sqrt2))   // Square root of 2

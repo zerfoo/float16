@@ -525,7 +525,7 @@ func ScaleSlice(s []Float16, scalar Float16) []Float16 {
 
 // SumSlice returns the sum of all elements in the slice
 func SumSlice(s []Float16) Float16 {
-	var sum Float16 = PositiveZero
+	sum := PositiveZero
 	for _, v := range s {
 		sum = Add(sum, v)
 	}
@@ -538,7 +538,7 @@ func DotProduct(a, b []Float16) Float16 {
 		panic("float16: slice length mismatch")
 	}
 
-	var sum Float16 = PositiveZero
+	sum := PositiveZero
 	for i := range a {
 		product := Mul(a[i], b[i])
 		sum = Add(sum, product)
@@ -548,7 +548,7 @@ func DotProduct(a, b []Float16) Float16 {
 
 // Norm2 computes the L2 norm (Euclidean norm) of a Float16 slice
 func Norm2(s []Float16) Float16 {
-	var sumSquares Float16 = PositiveZero
+	sumSquares := PositiveZero
 	for _, v := range s {
 		square := Mul(v, v)
 		sumSquares = Add(sumSquares, square)

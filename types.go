@@ -280,6 +280,7 @@ func (f Float16) String() string {
 func (f Float16) GoString() string {
 	return fmt.Sprintf("float16.FromBits(0x%04x)", uint16(f))
 }
+
 func (f Float16) ToInt32() int32 {
 	return int32(f.ToFloat32())
 }

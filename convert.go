@@ -212,44 +212,44 @@ func (f Float16) ToFloat64() float64 {
 // shouldRound determines whether to round up during conversion
 // This is a helper function used in conversion algorithms
 func shouldRound(mantissa uint32, shift int, sign uint16) bool {
-    if shift <= 0 {
-        return false
-    }
+	if shift <= 0 {
+		return false
+	}
 
-    // Bits about to be discarded
-    guard := (mantissa >> uint(shift-1)) & 1
-    sticky := mantissa & ((1 << uint(shift-1)) - 1)
-    lsb := (mantissa >> uint(shift)) & 1
-    anyDiscarded := (guard | (boolToUint(sticky != 0))) == 1
+	// Bits about to be discarded
+	guard := (mantissa >> uint(shift-1)) & 1
+	sticky := mantissa & ((1 << uint(shift-1)) - 1)
+	lsb := (mantissa >> uint(shift)) & 1
+	anyDiscarded := (guard | (boolToUint(sticky != 0))) == 1
 
-    switch DefaultRoundingMode {
-    case RoundNearestEven:
-        // Round up if guard=1 and (sticky!=0 or LSB is 1) => ties to even
-        return guard == 1 && (sticky != 0 || lsb == 1)
-    case RoundNearestAway:
-        // Round up on half or more (guard=1). If less than half (guard=0), do not round.
-        // sticky doesn't affect decision except that if sticky>0, it's strictly more than half.
-        return guard == 1 || sticky != 0
-    case RoundTowardZero:
-        return false
-    case RoundTowardPositive:
-        // Round up for positive numbers if any discarded bits are non-zero
-        return (sign&SignMask) == 0 && anyDiscarded
-    case RoundTowardNegative:
-        // Round up (i.e., toward -inf increases magnitude) for negative numbers if discarded bits
-        return (sign&SignMask) != 0 && anyDiscarded
-    default:
-        // Invalid rounding mode: do not round
-        return false
-    }
+	switch DefaultRoundingMode {
+	case RoundNearestEven:
+		// Round up if guard=1 and (sticky!=0 or LSB is 1) => ties to even
+		return guard == 1 && (sticky != 0 || lsb == 1)
+	case RoundNearestAway:
+		// Round up on half or more (guard=1). If less than half (guard=0), do not round.
+		// sticky doesn't affect decision except that if sticky>0, it's strictly more than half.
+		return guard == 1 || sticky != 0
+	case RoundTowardZero:
+		return false
+	case RoundTowardPositive:
+		// Round up for positive numbers if any discarded bits are non-zero
+		return (sign&SignMask) == 0 && anyDiscarded
+	case RoundTowardNegative:
+		// Round up (i.e., toward -inf increases magnitude) for negative numbers if discarded bits
+		return (sign&SignMask) != 0 && anyDiscarded
+	default:
+		// Invalid rounding mode: do not round
+		return false
+	}
 }
 
 // boolToUint converts a bool to 0/1 as uint32
 func boolToUint(b bool) uint32 {
-    if b {
-        return 1
-    }
-    return 0
+	if b {
+		return 1
+	}
+	return 0
 }
 
 // Parse converts a string to a Float16 value
@@ -355,4 +355,3 @@ func ParseFloat(s string, precision int) (Float16, error) {
 	}
 	return FromFloat32(float32(f32)), nil
 }
-
