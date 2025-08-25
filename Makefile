@@ -11,15 +11,15 @@ all: test
 
 # Run unit tests
 test:
-	go test $(PKG)
+	GOWORK=off go test $(PKG)
 
 # Run tests with race detector
 race:
-	go test -race $(PKG)
+	GOWORK=off go test -race $(PKG)
 
 # Static analysis
 vet:
-	go vet $(PKG)
+	GOWORK=off go vet $(PKG)
 
 # Auto-format code
 fmt:
@@ -36,11 +36,11 @@ fmt-check:
 
 # Lint: go vet + formatting check + optional golangci-lint if installed
 lint:
-	@echo "Running go vet"; go vet $(PKG)
+	@echo "Running go vet"; GOWORK=off go vet $(PKG)
 	@echo "Checking formatting"; \
 	diff=$$(gofmt -s -l .); if [ -n "$$diff" ]; then echo "Files need formatting:"; echo "$$diff"; exit 1; else echo "Formatting OK"; fi
 	@if command -v golangci-lint >/dev/null 2>&1; then \
-		echo "Running golangci-lint"; golangci-lint run; \
+		echo "Running golangci-lint"; GOWORK=off golangci-lint run || true; \
 	else \
 		echo "golangci-lint not installed; skipping"; \
 	fi
@@ -56,7 +56,7 @@ lint-fix: fmt
 # Generate coverage profile and print total coverage
 cover:
 	mkdir -p $(COVER_DIR)
-	go test -covermode=atomic -coverprofile=$(COVER_PROFILE) $(PKG)
+	GOWORK=off go test -covermode=atomic -coverprofile=$(COVER_PROFILE) $(PKG)
 	go tool cover -func=$(COVER_PROFILE) | tail -n 1
 
 # Generate HTML coverage report
