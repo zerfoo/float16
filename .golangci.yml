@@ -1,5 +1,21 @@
+version: "2"
+
 run:
   timeout: 5m
+
+linters:
+  enable:
+    - govet
+    - ineffassign
+    - misspell
+    - goconst
+    - gocyclo
+    - staticcheck
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
 
 linters-settings:
   gocyclo:
@@ -7,23 +23,10 @@ linters-settings:
   goconst:
     min-len: 3
     min-occurrences: 3
-  gofmt:
-    simplify: true
   govet:
     enable-all: true
   misspell:
     locale: US
-
-linters:
-  enable:
-    - gofmt
-    - goimports  
-    - govet
-    - ineffassign
-    - misspell
-    - goconst
-    - gocyclo
-    - staticcheck
 
 issues:
   max-issues-per-linter: 0

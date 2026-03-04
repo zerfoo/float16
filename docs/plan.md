@@ -1,5 +1,10 @@
 # BFloat16 Enhancement Plan
 
+**Legend:**
+- ✅ = Completed/Implemented
+- ⭕ = Not implemented yet / Missing
+- ❌ = Failed/Blocked
+
 ## Executive Summary
 This plan outlines the enhancements needed to bring BFloat16 to production quality with full feature parity with Float16. The goal is to make BFloat16 suitable for "zerfoo" production use cases with correct IEEE 754 rounding behavior and comprehensive functionality.
 
@@ -61,89 +66,89 @@ This plan outlines the enhancements needed to bring BFloat16 to production quali
 ### Phase 2: Arithmetic Enhancements (Priority: High)
 
 #### 2.1 Arithmetic Mode Support
-- Implement `BFloat16AddWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMode) (BFloat16, error)`
-- Implement `BFloat16SubWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMode) (BFloat16, error)`
-- Implement `BFloat16MulWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMode) (BFloat16, error)`
-- Implement `BFloat16DivWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMode) (BFloat16, error)`
+- ⭕ Implement `BFloat16AddWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMode) (BFloat16, error)` (test exists, no implementation)
+- ⭕ Implement `BFloat16SubWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMode) (BFloat16, error)` 
+- ⭕ Implement `BFloat16MulWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMode) (BFloat16, error)`
+- ⭕ Implement `BFloat16DivWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMode) (BFloat16, error)`
 
 #### 2.2 IEEE 754 Compliant Arithmetic
-- Implement proper NaN propagation
-- Handle subnormal arithmetic correctly
-- Implement gradual underflow
-- Add FMA (Fused Multiply-Add) support if needed
+- ⭕ Implement proper NaN propagation
+- ⭕ Handle subnormal arithmetic correctly
+- ⭕ Implement gradual underflow
+- ⭕ Add FMA (Fused Multiply-Add) support if needed
 
 ### Phase 3: Extended Operations (Priority: Medium)
 
 #### 3.1 Batch Operations
-- `BFloat16AddSlice(a, b []BFloat16) []BFloat16`
-- `BFloat16SubSlice(a, b []BFloat16) []BFloat16`
-- `BFloat16MulSlice(a, b []BFloat16) []BFloat16`
-- `BFloat16DivSlice(a, b []BFloat16) []BFloat16`
-- `BFloat16ScaleSlice(s []BFloat16, scalar BFloat16) []BFloat16`
-- `BFloat16SumSlice(s []BFloat16) BFloat16`
-- `BFloat16DotProduct(a, b []BFloat16) BFloat16`
-- `BFloat16Norm2(s []BFloat16) BFloat16`
+- ⭕ `BFloat16AddSlice(a, b []BFloat16) []BFloat16`
+- ⭕ `BFloat16SubSlice(a, b []BFloat16) []BFloat16`
+- ⭕ `BFloat16MulSlice(a, b []BFloat16) []BFloat16`
+- ⭕ `BFloat16DivSlice(a, b []BFloat16) []BFloat16`
+- ⭕ `BFloat16ScaleSlice(s []BFloat16, scalar BFloat16) []BFloat16`
+- ⭕ `BFloat16SumSlice(s []BFloat16) BFloat16`
+- ⭕ `BFloat16DotProduct(a, b []BFloat16) BFloat16`
+- ⭕ `BFloat16Norm2(s []BFloat16) BFloat16`
 
 #### 3.2 Conversion Utilities
-- `ToBFloat16Slice(s []float32) []BFloat16`
-- `ToBFloat16SliceWithMode(s []float32, convMode ConversionMode, roundMode RoundingMode) ([]BFloat16, []error)`
-- `BFloat16ToSlice32(s []BFloat16) []float32`
-- `BFloat16ToSlice64(s []BFloat16) []float64`
-- `BFloat16FromSlice64(s []float64) []BFloat16`
+- ⭕ `ToBFloat16Slice(s []float32) []BFloat16`
+- ⭕ `ToBFloat16SliceWithMode(s []float32, convMode ConversionMode, roundMode RoundingMode) ([]BFloat16, []error)`
+- ⭕ `BFloat16ToSlice32(s []BFloat16) []float32`
+- ⭕ `BFloat16ToSlice64(s []BFloat16) []float64`
+- ⭕ `BFloat16FromSlice64(s []float64) []BFloat16`
 
 ### Phase 4: Math Functions (Priority: Medium)
 
 #### 4.1 Basic Math Operations
-- `BFloat16Sqrt(b BFloat16) BFloat16`
-- `BFloat16Cbrt(b BFloat16) BFloat16`
-- `BFloat16Exp(b BFloat16) BFloat16`
-- `BFloat16Exp2(b BFloat16) BFloat16`
-- `BFloat16Log(b BFloat16) BFloat16`
-- `BFloat16Log2(b BFloat16) BFloat16`
-- `BFloat16Log10(b BFloat16) BFloat16`
+- ⭕ `BFloat16Sqrt(b BFloat16) BFloat16`
+- ⭕ `BFloat16Cbrt(b BFloat16) BFloat16`
+- ⭕ `BFloat16Exp(b BFloat16) BFloat16`
+- ⭕ `BFloat16Exp2(b BFloat16) BFloat16`
+- ⭕ `BFloat16Log(b BFloat16) BFloat16`
+- ⭕ `BFloat16Log2(b BFloat16) BFloat16`
+- ⭕ `BFloat16Log10(b BFloat16) BFloat16`
 
 #### 4.2 Trigonometric Functions
-- `BFloat16Sin(b BFloat16) BFloat16`
-- `BFloat16Cos(b BFloat16) BFloat16`
-- `BFloat16Tan(b BFloat16) BFloat16`
-- `BFloat16Asin(b BFloat16) BFloat16`
-- `BFloat16Acos(b BFloat16) BFloat16`
-- `BFloat16Atan(b BFloat16) BFloat16`
+- ⭕ `BFloat16Sin(b BFloat16) BFloat16`
+- ⭕ `BFloat16Cos(b BFloat16) BFloat16`
+- ⭕ `BFloat16Tan(b BFloat16) BFloat16`
+- ⭕ `BFloat16Asin(b BFloat16) BFloat16`
+- ⭕ `BFloat16Acos(b BFloat16) BFloat16`
+- ⭕ `BFloat16Atan(b BFloat16) BFloat16`
 
 #### 4.3 Hyperbolic Functions
-- `BFloat16Sinh(b BFloat16) BFloat16`
-- `BFloat16Cosh(b BFloat16) BFloat16`
-- `BFloat16Tanh(b BFloat16) BFloat16`
+- ⭕ `BFloat16Sinh(b BFloat16) BFloat16`
+- ⭕ `BFloat16Cosh(b BFloat16) BFloat16`
+- ⭕ `BFloat16Tanh(b BFloat16) BFloat16`
 
 #### 4.4 Advanced Math
-- `BFloat16Pow(x, y BFloat16) BFloat16`
-- `BFloat16Hypot(x, y BFloat16) BFloat16`
-- `BFloat16Atan2(y, x BFloat16) BFloat16`
-- `BFloat16Mod(x, y BFloat16) BFloat16`
-- `BFloat16Remainder(x, y BFloat16) BFloat16`
+- ⭕ `BFloat16Pow(x, y BFloat16) BFloat16`
+- ⭕ `BFloat16Hypot(x, y BFloat16) BFloat16`
+- ⭕ `BFloat16Atan2(y, x BFloat16) BFloat16`
+- ⭕ `BFloat16Mod(x, y BFloat16) BFloat16`
+- ⭕ `BFloat16Remainder(x, y BFloat16) BFloat16`
 
 ### Phase 5: Utility Functions (Priority: Low)
 
 #### 5.1 Parsing and Formatting
-- `BFloat16Parse(s string) (BFloat16, error)`
-- `BFloat16ParseFloat(s string, precision int) (BFloat16, error)`
-- `(b BFloat16) Format(fmt byte, prec int) string`
-- `(b BFloat16) GoString() string`
+- ⭕ `BFloat16Parse(s string) (BFloat16, error)`
+- ⭕ `BFloat16ParseFloat(s string, precision int) (BFloat16, error)`
+- ⭕ `(b BFloat16) Format(fmt byte, prec int) string`
+- ⭕ `(b BFloat16) GoString() string`
 
 #### 5.2 Integer Conversions
-- `BFloat16FromInt(i int) BFloat16`
-- `BFloat16FromInt32(i int32) BFloat16`
-- `BFloat16FromInt64(i int64) BFloat16`
-- `(b BFloat16) ToInt() int`
-- `(b BFloat16) ToInt32() int32`
-- `(b BFloat16) ToInt64() int64`
+- ⭕ `BFloat16FromInt(i int) BFloat16`
+- ⭕ `BFloat16FromInt32(i int32) BFloat16`
+- ⭕ `BFloat16FromInt64(i int64) BFloat16`
+- ⭕ `(b BFloat16) ToInt() int`
+- ⭕ `(b BFloat16) ToInt32() int32`
+- ⭕ `(b BFloat16) ToInt64() int64`
 
 #### 5.3 Additional Utilities
-- `BFloat16NextAfter(f, g BFloat16) BFloat16`
-- `BFloat16Frexp(f BFloat16) (frac BFloat16, exp int)`
-- `BFloat16Ldexp(frac BFloat16, exp int) BFloat16`
-- `BFloat16Modf(f BFloat16) (integer, frac BFloat16)`
-- `BFloat16CopySign(f, sign BFloat16) BFloat16`
+- ⭕ `BFloat16NextAfter(f, g BFloat16) BFloat16`
+- ⭕ `BFloat16Frexp(f BFloat16) (frac BFloat16, exp int)`
+- ⭕ `BFloat16Ldexp(frac BFloat16, exp int) BFloat16`
+- ⭕ `BFloat16Modf(f BFloat16) (integer, frac BFloat16)`
+- ✅ `BFloat16CopySign(f, sign BFloat16) BFloat16` (implemented as method)
 
 ### Phase 6: Testing and Documentation (Priority: Critical)
 

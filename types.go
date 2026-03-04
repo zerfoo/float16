@@ -59,6 +59,18 @@ const (
 	ModeStrict
 )
 
+// BFloat16ArithmeticMode controls how arithmetic operations handle special values and exceptions.
+type BFloat16ArithmeticMode int
+
+const (
+	// BFloat16ArithmeticModeIEEE performs IEEE-style arithmetic, propagating NaNs and Infs, and handling exceptions
+	// according to IEEE 754 standard.
+	BFloat16ArithmeticModeIEEE BFloat16ArithmeticMode = iota
+	// BFloat16ArithmeticModeStrict reports errors for arithmetic exceptions like NaN propagation, Inf operations,
+	// overflow, underflow, and division by zero.
+	BFloat16ArithmeticModeStrict
+)
+
 // Float16 represents a 16-bit IEEE 754 half-precision floating-point value
 type Float16 uint16
 

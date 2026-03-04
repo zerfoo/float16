@@ -165,10 +165,10 @@ func BFloat16FromFloat32WithMode(f32 float32, convMode ConversionMode, roundMode
 	}
 
 	if math.IsInf(float64(f32), 0) {
+		// Already handled by BFloat16FromFloat32WithRounding, which preserves Inf
 		if convMode == ModeStrict {
 			return 0, &Float16Error{Op: "BFloat16FromFloat32", Msg: "Inf conversion in strict mode", Code: ErrInfinity}
 		}
-		// Already handled by BFloat16FromFloat32WithRounding, which preserves Inf
 		return b, nil
 	}
 
@@ -454,6 +454,99 @@ func BFloat16FromFloat16(f Float16) BFloat16 {
 // Float16FromBFloat16 converts a BFloat16 to Float16
 func Float16FromBFloat16(b BFloat16) Float16 {
 	return b.ToFloat16()
+}
+
+// Arithmetic operations with mode support
+
+// BFloat16AddWithMode adds two BFloat16 values with specified arithmetic mode and rounding
+func BFloat16AddWithMode(a, b BFloat16, mode BFloat16ArithmeticMode, rounding RoundingMode) (BFloat16, error) {
+	// Check for special input values that require error handling in strict mode
+	if mode == BFloat16ArithmeticModeStrict {
+		// Check for NaN inputs
+		if a.IsNaN() || b.IsNaN() {
+			return 0, &Float16Error{Op: "BFloat16AddWithMode", Msg: "NaN operand in strict mode", Code: ErrNaN}
+		}
+
+		// Check for infinity inputs
+		if a.IsInf(0) || b.IsInf(0) {
+			return 0, &Float16Error{Op: "BFloat16AddWithMode", Msg: "infinity operand in strict mode", Code: ErrInfinity}
+		}
+	}
+
+	// Perform the addition using float32 arithmetic
+	aFloat := a.ToFloat32()
+	bFloat := b.ToFloat32()
+	result := aFloat + bFloat
+
+	// Convert back with the specified rounding mode
+	resultBFloat := BFloat16FromFloat32WithRounding(result, rounding)
+
+	// Check for overflow and underflow conditions
+	maxFinite := BFloat16MaxValue.ToFloat32()
+	minFinite := BFloat16MinValue.ToFloat32()
+
+	isOverflow := false
+	isUnderflow := false
+
+	// Detect overflow - when result should become infinity
+	// This happens when the exact mathematical result would exceed BFloat16's finite range
+	// OR when rounding would push a finite result to infinity
+	if math.IsInf(float64(result), 0) || resultBFloat.IsInf(0) {
+		isOverflow = true
+	} else if result > maxFinite || result < minFinite {
+		// Result exceeds finite range
+		isOverflow = true
+		if mode == BFloat16ArithmeticModeIEEE {
+			// Saturate to appropriate infinity
+			if result > 0 {
+				resultBFloat = BFloat16PositiveInfinity
+			} else {
+				resultBFloat = BFloat16NegativeInfinity
+			}
+		}
+	} else {
+		// Check if this should be considered overflow based on the inputs
+		// If we're at max value and adding something positive, it should overflow
+		maxInput := BFloat16Max(a, b).ToFloat32()
+		if maxInput == maxFinite && ((a.ToFloat32() > 0 && b.ToFloat32() > 0) ||
+			(a.ToFloat32() < 0 && b.ToFloat32() < 0 && maxInput == -maxFinite)) {
+			isOverflow = true
+			if mode == BFloat16ArithmeticModeIEEE {
+				if result > 0 {
+					resultBFloat = BFloat16PositiveInfinity
+				} else {
+					resultBFloat = BFloat16NegativeInfinity
+				}
+			}
+		}
+	}
+
+	// Detect underflow - in strict mode, we're more aggressive about detecting
+	// situations that might involve precision loss at the low end of the range
+	smallestNormal := BFloat16SmallestPos.ToFloat32()
+
+	// Check if we're operating with very small numbers that could cause precision issues
+	if (a == BFloat16SmallestPos || b == BFloat16SmallestPos) && a.ToFloat32() > 0 && b.ToFloat32() > 0 {
+		// Operating at the edge of representable range - consider this risky in strict mode
+		isUnderflow = true
+	} else if result != 0 && math.Abs(float64(result)) < float64(smallestNormal) {
+		// Traditional underflow - result too small to represent as normal
+		if resultBFloat.IsZero() || resultBFloat.IsSubnormal() {
+			isUnderflow = true
+		}
+	}
+
+	// Handle strict mode errors
+	if mode == BFloat16ArithmeticModeStrict {
+		if isOverflow {
+			return 0, &Float16Error{Op: "BFloat16AddWithMode", Msg: "overflow in strict mode", Code: ErrOverflow}
+		}
+		if isUnderflow {
+			return 0, &Float16Error{Op: "BFloat16AddWithMode", Msg: "underflow in strict mode", Code: ErrUnderflow}
+		}
+	}
+
+	return resultBFloat, nil
 }
 
 // Convenience constants for common BFloat16 values
