@@ -1,3 +1,3 @@
 module github.com/zerfoo/float16
 
-go 1.25
+go 1.26
