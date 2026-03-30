@@ -7,7 +7,7 @@ func BFloat16AddWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMo
 	// Handle NaN propagation: if either operand is NaN, propagate it
 	if a.IsNaN() || b.IsNaN() {
 		if mode == ModeExactArithmetic {
-			return 0, &Float16Error{Op: "bfloat16_add", Msg: "NaN operand in exact mode", Code: ErrNaN}
+			return 0, &BFloat16Error{Op: "bfloat16_add", Msg: "NaN operand in exact mode", Code: ErrNaN}
 		}
 		return BFloat16QuietNaN, nil
 	}
@@ -24,7 +24,7 @@ func BFloat16AddWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMo
 	if a.IsInf(0) || b.IsInf(0) {
 		if a.IsInf(1) && b.IsInf(-1) || a.IsInf(-1) && b.IsInf(1) {
 			if mode == ModeExactArithmetic {
-				return 0, &Float16Error{Op: "bfloat16_add", Msg: "infinity - infinity is undefined", Code: ErrInvalidOperation}
+				return 0, &BFloat16Error{Op: "bfloat16_add", Msg: "infinity - infinity is undefined", Code: ErrInvalidOperation}
 			}
 			return BFloat16QuietNaN, nil
 		}
@@ -64,7 +64,7 @@ func BFloat16MulWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMo
 	// NaN propagation
 	if a.IsNaN() || b.IsNaN() {
 		if mode == ModeExactArithmetic {
-			return 0, &Float16Error{Op: "bfloat16_mul", Msg: "NaN operand in exact mode", Code: ErrNaN}
+			return 0, &BFloat16Error{Op: "bfloat16_mul", Msg: "NaN operand in exact mode", Code: ErrNaN}
 		}
 		return BFloat16QuietNaN, nil
 	}
@@ -75,7 +75,7 @@ func BFloat16MulWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMo
 	// 0 * Inf = NaN
 	if (aZero && b.IsInf(0)) || (a.IsInf(0) && bZero) {
 		if mode == ModeExactArithmetic {
-			return 0, &Float16Error{Op: "bfloat16_mul", Msg: "zero times infinity is undefined", Code: ErrInvalidOperation}
+			return 0, &BFloat16Error{Op: "bfloat16_mul", Msg: "zero times infinity is undefined", Code: ErrInvalidOperation}
 		}
 		return BFloat16QuietNaN, nil
 	}
@@ -119,7 +119,7 @@ func BFloat16DivWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMo
 	// NaN propagation
 	if a.IsNaN() || b.IsNaN() {
 		if mode == ModeExactArithmetic {
-			return 0, &Float16Error{Op: "bfloat16_div", Msg: "NaN operand in exact mode", Code: ErrNaN}
+			return 0, &BFloat16Error{Op: "bfloat16_div", Msg: "NaN operand in exact mode", Code: ErrNaN}
 		}
 		return BFloat16QuietNaN, nil
 	}
@@ -127,7 +127,7 @@ func BFloat16DivWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMo
 	// 0 / 0 = NaN
 	if a.IsZero() && b.IsZero() {
 		if mode == ModeExactArithmetic {
-			return 0, &Float16Error{Op: "bfloat16_div", Msg: "zero divided by zero is undefined", Code: ErrInvalidOperation}
+			return 0, &BFloat16Error{Op: "bfloat16_div", Msg: "zero divided by zero is undefined", Code: ErrInvalidOperation}
 		}
 		return BFloat16QuietNaN, nil
 	}
@@ -135,7 +135,7 @@ func BFloat16DivWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMo
 	// finite / 0 = +/-Inf
 	if b.IsZero() {
 		if mode == ModeExactArithmetic {
-			return 0, &Float16Error{Op: "bfloat16_div", Msg: "division by zero", Code: ErrDivisionByZero}
+			return 0, &BFloat16Error{Op: "bfloat16_div", Msg: "division by zero", Code: ErrDivisionByZero}
 		}
 		if a.Signbit() != b.Signbit() {
 			return BFloat16NegativeInfinity, nil
@@ -154,7 +154,7 @@ func BFloat16DivWithMode(a, b BFloat16, mode ArithmeticMode, rounding RoundingMo
 	// Inf / Inf = NaN
 	if a.IsInf(0) && b.IsInf(0) {
 		if mode == ModeExactArithmetic {
-			return 0, &Float16Error{Op: "bfloat16_div", Msg: "infinity divided by infinity is undefined", Code: ErrInvalidOperation}
+			return 0, &BFloat16Error{Op: "bfloat16_div", Msg: "infinity divided by infinity is undefined", Code: ErrInvalidOperation}
 		}
 		return BFloat16QuietNaN, nil
 	}

@@ -35,9 +35,9 @@ func TestBFloat16AddWithMode(t *testing.T) {
 				if err == nil {
 					t.Fatalf("expected error, got nil")
 				}
-				fe, ok := err.(*Float16Error)
+				fe, ok := err.(*BFloat16Error)
 				if !ok {
-					t.Fatalf("expected *Float16Error, got %T", err)
+					t.Fatalf("expected *BFloat16Error, got %T", err)
 				}
 				if fe.Code != tt.errCode {
 					t.Errorf("error code = %d, want %d", fe.Code, tt.errCode)
@@ -83,9 +83,9 @@ func TestBFloat16SubWithMode(t *testing.T) {
 				if err == nil {
 					t.Fatalf("expected error, got nil")
 				}
-				fe, ok := err.(*Float16Error)
+				fe, ok := err.(*BFloat16Error)
 				if !ok {
-					t.Fatalf("expected *Float16Error, got %T", err)
+					t.Fatalf("expected *BFloat16Error, got %T", err)
 				}
 				if fe.Code != tt.errCode {
 					t.Errorf("error code = %d, want %d", fe.Code, tt.errCode)
@@ -133,9 +133,9 @@ func TestBFloat16MulWithMode(t *testing.T) {
 				if err == nil {
 					t.Fatalf("expected error, got nil")
 				}
-				fe, ok := err.(*Float16Error)
+				fe, ok := err.(*BFloat16Error)
 				if !ok {
-					t.Fatalf("expected *Float16Error, got %T", err)
+					t.Fatalf("expected *BFloat16Error, got %T", err)
 				}
 				if fe.Code != tt.errCode {
 					t.Errorf("error code = %d, want %d", fe.Code, tt.errCode)
@@ -193,9 +193,9 @@ func TestBFloat16DivWithMode(t *testing.T) {
 				if err == nil {
 					t.Fatalf("expected error, got nil")
 				}
-				fe, ok := err.(*Float16Error)
+				fe, ok := err.(*BFloat16Error)
 				if !ok {
-					t.Fatalf("expected *Float16Error, got %T", err)
+					t.Fatalf("expected *BFloat16Error, got %T", err)
 				}
 				if fe.Code != tt.errCode {
 					t.Errorf("error code = %d, want %d", fe.Code, tt.errCode)
@@ -291,9 +291,9 @@ func TestBFloat16NaNPropagationAllModes(t *testing.T) {
 					if err == nil {
 						t.Fatal("expected error for NaN in exact mode, got nil")
 					}
-					fe, ok := err.(*Float16Error)
+					fe, ok := err.(*BFloat16Error)
 					if !ok {
-						t.Fatalf("expected *Float16Error, got %T", err)
+						t.Fatalf("expected *BFloat16Error, got %T", err)
 					}
 					if fe.Code != ErrNaN {
 						t.Errorf("error code = %d, want %d (ErrNaN)", fe.Code, ErrNaN)
