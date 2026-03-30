@@ -456,6 +456,114 @@ func Float16FromBFloat16(b BFloat16) Float16 {
 	return b.ToFloat16()
 }
 
+// Batch operations for high-performance computing
+
+// BFloat16AddSlice performs element-wise addition of two BFloat16 slices
+func BFloat16AddSlice(a, b []BFloat16) []BFloat16 {
+	if len(a) != len(b) {
+		panic("float16: slice length mismatch")
+	}
+
+	result := make([]BFloat16, len(a))
+	for i := range a {
+		result[i] = BFloat16Add(a[i], b[i])
+	}
+	return result
+}
+
+// BFloat16SubSlice performs element-wise subtraction of two BFloat16 slices
+func BFloat16SubSlice(a, b []BFloat16) []BFloat16 {
+	if len(a) != len(b) {
+		panic("float16: slice length mismatch")
+	}
+
+	result := make([]BFloat16, len(a))
+	for i := range a {
+		result[i] = BFloat16Sub(a[i], b[i])
+	}
+	return result
+}
+
+// BFloat16MulSlice performs element-wise multiplication of two BFloat16 slices
+func BFloat16MulSlice(a, b []BFloat16) []BFloat16 {
+	if len(a) != len(b) {
+		panic("float16: slice length mismatch")
+	}
+
+	result := make([]BFloat16, len(a))
+	for i := range a {
+		result[i] = BFloat16Mul(a[i], b[i])
+	}
+	return result
+}
+
+// BFloat16DivSlice performs element-wise division of two BFloat16 slices
+func BFloat16DivSlice(a, b []BFloat16) []BFloat16 {
+	if len(a) != len(b) {
+		panic("float16: slice length mismatch")
+	}
+
+	result := make([]BFloat16, len(a))
+	for i := range a {
+		result[i] = BFloat16Div(a[i], b[i])
+	}
+	return result
+}
+
+// BFloat16ScaleSlice multiplies each element in the slice by a scalar
+func BFloat16ScaleSlice(s []BFloat16, scalar BFloat16) []BFloat16 {
+	result := make([]BFloat16, len(s))
+	for i := range s {
+		result[i] = BFloat16Mul(s[i], scalar)
+	}
+	return result
+}
+
+// BFloat16SumSlice returns the sum of all elements in the slice
+func BFloat16SumSlice(s []BFloat16) BFloat16 {
+	sum := BFloat16PositiveZero
+	for _, v := range s {
+		sum = BFloat16Add(sum, v)
+	}
+	return sum
+}
+
+// BFloat16ToSlice32 converts a slice of BFloat16 values to float32
+func BFloat16ToSlice32(s []BFloat16) []float32 {
+	result := make([]float32, len(s))
+	for i, v := range s {
+		result[i] = v.ToFloat32()
+	}
+	return result
+}
+
+// BFloat16FromSlice32 converts a slice of float32 values to BFloat16
+func BFloat16FromSlice32(s []float32) []BFloat16 {
+	result := make([]BFloat16, len(s))
+	for i, v := range s {
+		result[i] = BFloat16FromFloat32(v)
+	}
+	return result
+}
+
+// BFloat16ToSlice64 converts a slice of BFloat16 values to float64
+func BFloat16ToSlice64(s []BFloat16) []float64 {
+	result := make([]float64, len(s))
+	for i, v := range s {
+		result[i] = float64(v.ToFloat32())
+	}
+	return result
+}
+
+// BFloat16FromSlice64 converts a slice of float64 values to BFloat16
+func BFloat16FromSlice64(s []float64) []BFloat16 {
+	result := make([]BFloat16, len(s))
+	for i, v := range s {
+		result[i] = BFloat16FromFloat32(float32(v))
+	}
+	return result
+}
+
 // Convenience constants for common BFloat16 values
 var (
 	BFloat16Zero  = BFloat16PositiveZero
