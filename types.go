@@ -34,6 +34,23 @@ func (e *Float16Error) Error() string {
 	return "float16: " + e.Msg
 }
 
+// BFloat16Error provides detailed error information for bfloat16 operations
+type BFloat16Error struct {
+	Op   string
+	Msg  string
+	Code ErrorCode
+}
+
+func (e *BFloat16Error) Error() string {
+	if e == nil {
+		return "<nil>"
+	}
+	if e.Op != "" {
+		return fmt.Sprintf("bfloat16 %s: %s", e.Op, e.Msg)
+	}
+	return "bfloat16: " + e.Msg
+}
+
 // RoundingMode controls how results are rounded during conversion/arithmetic
 type RoundingMode int
 

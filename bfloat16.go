@@ -159,14 +159,14 @@ func BFloat16FromFloat32WithMode(f32 float32, convMode ConversionMode, roundMode
 	// Check for special values and ranges
 	if math.IsNaN(float64(f32)) {
 		if convMode == ModeStrict {
-			return 0, &Float16Error{Op: "BFloat16FromFloat32", Msg: "NaN conversion in strict mode", Code: ErrNaN}
+			return 0, &BFloat16Error{Op: "BFloat16FromFloat32", Msg: "NaN conversion in strict mode", Code: ErrNaN}
 		}
 		return BFloat16QuietNaN, nil
 	}
 
 	if math.IsInf(float64(f32), 0) {
 		if convMode == ModeStrict {
-			return 0, &Float16Error{Op: "BFloat16FromFloat32", Msg: "Inf conversion in strict mode", Code: ErrInfinity}
+			return 0, &BFloat16Error{Op: "BFloat16FromFloat32", Msg: "Inf conversion in strict mode", Code: ErrInfinity}
 		}
 		// Already handled by BFloat16FromFloat32WithRounding, which preserves Inf
 		return b, nil
@@ -180,7 +180,7 @@ func BFloat16FromFloat32WithMode(f32 float32, convMode ConversionMode, roundMode
 
 	if f32 > bf16Max || f32 < bf16Min {
 		if convMode == ModeStrict {
-			return 0, &Float16Error{Op: "BFloat16FromFloat32", Msg: "overflow in strict mode", Code: ErrOverflow}
+			return 0, &BFloat16Error{Op: "BFloat16FromFloat32", Msg: "overflow in strict mode", Code: ErrOverflow}
 		}
 		// ModeIEEE: saturate to infinity
 		if f32 > 0 {
@@ -194,7 +194,7 @@ func BFloat16FromFloat32WithMode(f32 float32, convMode ConversionMode, roundMode
 	// and the result after rounding is zero, it's an underflow.
 	if f32 != 0 && math.Abs(float64(f32)) < float64(bf16SmallestNormalPos) && b.IsZero() {
 		if convMode == ModeStrict {
-			return 0, &Float16Error{Op: "BFloat16FromFloat32", Msg: "underflow in strict mode", Code: ErrUnderflow}
+			return 0, &BFloat16Error{Op: "BFloat16FromFloat32", Msg: "underflow in strict mode", Code: ErrUnderflow}
 		}
 		// ModeIEEE: saturate to zero (already handled by rounding to zero)
 		return b, nil
