@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/zerfoo/float16/compare/v0.2.1...v0.3.0) (2026-03-30)
+
+
+### Features
+
+* **bfloat16:** add ArithmeticMode support and NaN propagation ([5ddc6a1](https://github.com/zerfoo/float16/commit/5ddc6a1df2b42ec7814adfe5b08c20156bbff8e9))
+
 ## [0.2.1](https://github.com/zerfoo/float16/compare/v0.2.0...v0.2.1) (2026-03-13)
 
 
