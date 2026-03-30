@@ -14,6 +14,7 @@ const (
 	ErrOverflow
 	ErrUnderflow
 	ErrDivisionByZero
+	ErrNotImplemented
 )
 
 // Float16Error provides detailed error information for float16 operations
