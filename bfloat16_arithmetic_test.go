@@ -252,57 +252,203 @@ func TestBFloat16FMA(t *testing.T) {
 	}
 }
 
-func TestBFloat16NaNPropagation(t *testing.T) {
+func TestBFloat16NaNPropagationAllModes(t *testing.T) {
 	nan := BFloat16QuietNaN
 	one := BFloat16FromFloat32(1)
 
+	type opFunc func(a, b BFloat16, mode ArithmeticMode, rounding RoundingMode) (BFloat16, error)
+
 	ops := []struct {
 		name string
-		fn   func() (BFloat16, error)
+		fn   opFunc
+		a, b BFloat16
 	}{
-		{"add(NaN,1)", func() (BFloat16, error) { return BFloat16AddWithMode(nan, one, ModeIEEEArithmetic, RoundNearestEven) }},
-		{"add(1,NaN)", func() (BFloat16, error) { return BFloat16AddWithMode(one, nan, ModeIEEEArithmetic, RoundNearestEven) }},
-		{"sub(NaN,1)", func() (BFloat16, error) { return BFloat16SubWithMode(nan, one, ModeIEEEArithmetic, RoundNearestEven) }},
-		{"mul(NaN,1)", func() (BFloat16, error) { return BFloat16MulWithMode(nan, one, ModeIEEEArithmetic, RoundNearestEven) }},
-		{"div(NaN,1)", func() (BFloat16, error) { return BFloat16DivWithMode(nan, one, ModeIEEEArithmetic, RoundNearestEven) }},
-		{"div(1,NaN)", func() (BFloat16, error) { return BFloat16DivWithMode(one, nan, ModeIEEEArithmetic, RoundNearestEven) }},
+		{"add(NaN,1)", BFloat16AddWithMode, nan, one},
+		{"add(1,NaN)", BFloat16AddWithMode, one, nan},
+		{"sub(NaN,1)", BFloat16SubWithMode, nan, one},
+		{"sub(1,NaN)", BFloat16SubWithMode, one, nan},
+		{"mul(NaN,1)", BFloat16MulWithMode, nan, one},
+		{"mul(1,NaN)", BFloat16MulWithMode, one, nan},
+		{"div(NaN,1)", BFloat16DivWithMode, nan, one},
+		{"div(1,NaN)", BFloat16DivWithMode, one, nan},
+	}
+
+	modes := []struct {
+		name    string
+		mode    ArithmeticMode
+		wantErr bool
+	}{
+		{"IEEE", ModeIEEEArithmetic, false},
+		{"fast", ModeFastArithmetic, false},
+		{"exact", ModeExactArithmetic, true},
 	}
 
 	for _, op := range ops {
-		t.Run(op.name, func(t *testing.T) {
-			got, err := op.fn()
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if !got.IsNaN() {
-				t.Errorf("expected NaN, got 0x%04X (%v)", got.Bits(), got)
-			}
-		})
+		for _, m := range modes {
+			t.Run(op.name+"/"+m.name, func(t *testing.T) {
+				got, err := op.fn(op.a, op.b, m.mode, RoundNearestEven)
+				if m.wantErr {
+					if err == nil {
+						t.Fatal("expected error for NaN in exact mode, got nil")
+					}
+					fe, ok := err.(*Float16Error)
+					if !ok {
+						t.Fatalf("expected *Float16Error, got %T", err)
+					}
+					if fe.Code != ErrNaN {
+						t.Errorf("error code = %d, want %d (ErrNaN)", fe.Code, ErrNaN)
+					}
+					return
+				}
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				if !got.IsNaN() {
+					t.Errorf("expected NaN, got 0x%04X (%v)", got.Bits(), got)
+				}
+			})
+		}
 	}
 }
 
 func TestBFloat16GradualUnderflow(t *testing.T) {
-	// Multiplying two very small normal numbers should produce a subnormal
-	// rather than flushing to zero.
 	smallest := BFloat16SmallestPos // smallest positive normal
 	half := BFloat16FromFloat32(0.5)
 
-	got, err := BFloat16MulWithMode(smallest, half, ModeIEEEArithmetic, RoundNearestEven)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	t.Run("mul/smallest*0.5", func(t *testing.T) {
+		got, err := BFloat16MulWithMode(smallest, half, ModeIEEEArithmetic, RoundNearestEven)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got.IsZero() {
+			t.Fatal("expected subnormal result, got zero")
+		}
+		gotF := got.ToFloat32()
+		wantF := smallest.ToFloat32() * 0.5
+		if math.Abs(float64(gotF-wantF)) > float64(wantF)*0.1 {
+			t.Errorf("got %e, want approximately %e", gotF, wantF)
+		}
+	})
+
+	t.Run("mul/neg_underflow", func(t *testing.T) {
+		neg := BFloat16Neg(smallest)
+		got, err := BFloat16MulWithMode(neg, half, ModeIEEEArithmetic, RoundNearestEven)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got.IsZero() {
+			t.Fatal("expected negative subnormal, got zero")
+		}
+		if got.ToFloat32() >= 0 {
+			t.Errorf("expected negative result, got %e", got.ToFloat32())
+		}
+	})
+
+	t.Run("add/near_subnormal_boundary", func(t *testing.T) {
+		// Adding two values that sum to something below the smallest normal
+		// should produce a subnormal, not zero.
+		sub := BFloat16SmallestPosSubnormal
+		got, err := BFloat16AddWithMode(sub, sub, ModeIEEEArithmetic, RoundNearestEven)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got.IsZero() {
+			t.Fatal("expected non-zero subnormal sum, got zero")
+		}
+		wantF := BFloat16SmallestPosSubnormal.ToFloat32() * 2
+		gotF := got.ToFloat32()
+		if math.Abs(float64(gotF-wantF)) > float64(wantF)*0.1 {
+			t.Errorf("got %e, want approximately %e", gotF, wantF)
+		}
+	})
+
+	t.Run("div/smallest/2", func(t *testing.T) {
+		two := BFloat16FromFloat32(2)
+		got, err := BFloat16DivWithMode(smallest, two, ModeIEEEArithmetic, RoundNearestEven)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if got.IsZero() {
+			t.Fatal("expected subnormal result, got zero")
+		}
+		gotF := got.ToFloat32()
+		wantF := smallest.ToFloat32() / 2
+		if math.Abs(float64(gotF-wantF)) > float64(wantF)*0.1 {
+			t.Errorf("got %e, want approximately %e", gotF, wantF)
+		}
+	})
+
+	t.Run("sub/subnormal_boundary", func(t *testing.T) {
+		// Subtracting values that are very close should yield a subnormal.
+		a := BFloat16FromFloat32(smallest.ToFloat32() * 1.5)
+		got, err := BFloat16SubWithMode(a, smallest, ModeIEEEArithmetic, RoundNearestEven)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		// Result should be approximately 0.5 * smallest normal = subnormal
+		if got.IsZero() {
+			t.Fatal("expected subnormal result, got zero")
+		}
+	})
+}
+
+func TestBFloat16FMACorrectness(t *testing.T) {
+	tests := []struct {
+		name    string
+		a, b, c BFloat16
+		wantNaN bool
+		wantF32 float32
+	}{
+		{"2*3+1=7", BFloat16FromFloat32(2), BFloat16FromFloat32(3), BFloat16FromFloat32(1), false, 7},
+		{"-2*3+10=4", BFloat16FromFloat32(-2), BFloat16FromFloat32(3), BFloat16FromFloat32(10), false, 4},
+		{"0*5+3=3", BFloat16PositiveZero, BFloat16FromFloat32(5), BFloat16FromFloat32(3), false, 3},
+		{"5*0+3=3", BFloat16FromFloat32(5), BFloat16PositiveZero, BFloat16FromFloat32(3), false, 3},
+		{"1*1+0=1", BFloat16FromFloat32(1), BFloat16FromFloat32(1), BFloat16PositiveZero, false, 1},
+		{"-1*-1+0=1", BFloat16FromFloat32(-1), BFloat16FromFloat32(-1), BFloat16PositiveZero, false, 1},
+		{"4*0.5+-2=0", BFloat16FromFloat32(4), BFloat16FromFloat32(0.5), BFloat16FromFloat32(-2), false, 0},
+		// NaN in each operand position
+		{"NaN*1+0", BFloat16QuietNaN, BFloat16FromFloat32(1), BFloat16PositiveZero, true, 0},
+		{"1*NaN+0", BFloat16FromFloat32(1), BFloat16QuietNaN, BFloat16PositiveZero, true, 0},
+		{"1*1+NaN", BFloat16FromFloat32(1), BFloat16FromFloat32(1), BFloat16QuietNaN, true, 0},
+		{"NaN*NaN+NaN", BFloat16QuietNaN, BFloat16QuietNaN, BFloat16QuietNaN, true, 0},
 	}
 
-	// The result should be subnormal (half the smallest normal)
-	if got.IsZero() {
-		t.Error("expected subnormal result, got zero (gradual underflow not working)")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := BFloat16FMA(tt.a, tt.b, tt.c)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantNaN {
+				if !got.IsNaN() {
+					t.Errorf("expected NaN, got %v (0x%04X)", got, got.Bits())
+				}
+				return
+			}
+			gotF32 := got.ToFloat32()
+			if gotF32 != tt.wantF32 {
+				t.Errorf("got %v, want %v", gotF32, tt.wantF32)
+			}
+		})
 	}
 
-	// Verify the result is approximately half of the smallest normal
-	gotF := got.ToFloat32()
-	wantF := smallest.ToFloat32() * 0.5
-	if math.Abs(float64(gotF-wantF)) > float64(wantF)*0.1 {
-		t.Errorf("got %e, want approximately %e", gotF, wantF)
-	}
+	// FMA precision test: verify fused multiply-add avoids intermediate rounding.
+	// For values where a*b overflows float16 range but a*b+c is representable,
+	// FMA via float64 should give a more accurate result.
+	t.Run("precision/no_intermediate_rounding", func(t *testing.T) {
+		a := BFloat16FromFloat32(100)
+		b := BFloat16FromFloat32(100)
+		c := BFloat16FromFloat32(-9984) // 100*100 = 10000; 10000 - 9984 = 16
+		got, err := BFloat16FMA(a, b, c)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		gotF := got.ToFloat32()
+		wantF := float32(math.FMA(float64(a.ToFloat32()), float64(b.ToFloat32()), float64(c.ToFloat32())))
+		if gotF != wantF {
+			t.Errorf("got %v, want %v", gotF, wantF)
+		}
+	})
 }
 
 func TestBFloat16ArithmeticWithMode(t *testing.T) {
